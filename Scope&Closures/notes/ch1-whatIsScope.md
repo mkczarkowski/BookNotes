@@ -3,7 +3,7 @@
 Przechowywanie wartości i pobieranie ich ze zmiennych nadaje
 programowi **stan** (eng. _state_).
 
-**Zakres** (ang. _scope_) - zbiór zasad dotyczący przechowywania i odnajdywania zmiennych.
+**Zakres** (ang. _scope_) - zbiór zasad dotyczący przechowywania i wyszukiwania zmiennych.
 
 ####**Kompilator - teoria**
 
@@ -42,7 +42,7 @@ Kod Javascript jest najczęściej kompilowany na kilka mikrosekund przed jego wy
 Podczas wykonywania kodu silnik wyszukuje deklaracji zmiennych przy pomocy zakresu.
 Istnieją dwa rodzaje wyszukiwania operacji przypisania: LHS oraz RHS (lewostronne i prawostronne).
 
-LHS sprawdza co jest celem przypisania, RHS sprawdza co jest źródłem przypisania.
+LHS sprawdza co jest celem przypisania i przypisuje mu nową wartość, RHS sprawdza co jest źródłem przypisania i pobiera jego wartość.
 
 **Przykłady:**
 
@@ -68,7 +68,7 @@ return a + b;
 var c = foo(2);
 ```
 LHS: `var c`, `a = 2`, `var b`.  
-RHS: `...foo(2)`, `...a`, `a...`, `...b`.
+RHS: `...foo(2)`, `... = a`, `a...`, `...b`.
 
 ####**Zagnieżdżony zakres**
 
@@ -88,3 +88,24 @@ Referencja RHS nie może zostać wykonana wewnątrz zakresu funkcji foo,
 ale jest to możliwe w zakresie zewnętrznym (globalnym).
 
 ####**Błędy**
+
+Wyszukiwanie LHS oraz RHS inaczej reagują na brak wcześniejszego zadeklarowania zmiennej (non-strict mode).
+
+```
+function foo(a) {
+ console.log(a + b);
+ b = a;
+}
+foo(2);
+```
+
+Przy wywołaniu metody log() silnik wykonuje wyszukiwanie RHS dla wartości `b`. Zmienna nie została zadeklarowana w
+aktualnym zakresie oraz zakresach zewnętrznych (w tym przypadku globalnym) co skutkuje wyrzuceniem `ReferenceError`.  
+
+Zachowanie silnika w przypadku nieudanego wyszukiwania LHS jest zależne od aktywnego trybu. 
+
+Non-strict mode: utworzenie zmiennej w zakresie globalnym.
+Strict mode: wyrzucenie `ReferenceError` jak w przypadku wyszukiwania RHS.
+
+Gdy po wyszukiwaniu RHS próbujemy wykonać działanie niemożliwe dla danej wartości (np. wywołanie dla wartości niefunkcyjnej, 
+referencja właściwości dla null/undefined) silnik wyrzuca `TypeError`.
