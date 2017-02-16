@@ -35,7 +35,7 @@ Silnik rozpoczyna poszukiwania od aktualnego zakresu, w przypadku braku efektów
 Ten proces powtarza się, aż do natrafienia na zakres globalny. Wyszukiwanie kończy się po natrafieniu na pierwszy wynik.
 
 **Zaciemnianie zmiennej** - używanie tego samego identyfikatora dla zmiennych w różnych zakresach. 
-Wewnętrzny identyfikator zaciemnia zewnętrzny (na niego silnik natrafi szybciej).
+Wewnętrzny identyfikator zaciemnia zewnętrzny (na niego silnik natrafia szybciej).
 
 **Warto pamiętać:**
 Zmienne globalne automatycznie stają się właściwościami globalnego obiektu (window dla przeglądarek), 
@@ -63,8 +63,8 @@ function foo(str, a) {
 var b = 2;
 foo("var b = 3;", 1); // 1, 3
 ```
-W momencie wywołania eval() deklaracja `"var b = 3;"` w zakresie foo jest traktowana jak pozostałe fragmenty kodu, 
-które znajdywały się tam od momentu napisania programu. W ten sposób dochodzi do zacieniowania zmiennej globalnej `b`. 
+W momencie wywołania `eval()` deklaracja `"var b = 3;"` w zakresie foo jest traktowana jak pozostałe fragmenty kodu, 
+które znalazły się tam w momencie pisania programu. W ten sposób dochodzi do zacieniowania zmiennej globalnej `b`. 
 Silnik wykonując wyszukiwanie RHS podczas wywoływania metody log() natrafia szybciej na wstawioną przez eval 
 zmienną b i to jej wartość zostaje przyjęta jako argument.
 
@@ -129,8 +129,8 @@ Do takiej sytuacji dojdzie oczywiście tylko w non-strict mode.
 
 #####Wpływ na wydajność
 
-Jeżeli silnik natrafi na `eval()` lub `with()` podczas kompilacji kodu wychodzi z słusznego założenia, że cała jego wiedza na
-temat identyfikatorów może być niezgodna ze stanem podczas wykonywania kodu. Rezygnuje więc z optymalizacji, która i tak
-byłaby bezsensowne w obliczu zmian wprowadzanych przez te metody.
+Jeżeli silnik natrafi na `eval()` lub `with()` podczas kompilacji kodu wychodzi z słusznego założenia, 
+że cała jego wiedza na temat identyfikatorów może być niezgodna ze stanem podczas wykonywania kodu. 
+Rezygnuje więc z optymalizacji, która i tak byłaby bezsensowna w obliczu zmian wprowadzanych przez te metody.
 
 Wniosek: użycie `eval` lub `with` prowadzi do nieuchronnego spowolnienia działania programu, więc nie warto ich używać.
