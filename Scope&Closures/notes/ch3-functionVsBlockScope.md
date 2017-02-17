@@ -108,3 +108,81 @@ zakresu.
 
 ####Funkcje jako zakresy
 
+Aby nie zanieczyszczać globalnej przestrzeni nazw identyfikatorem funkcji, której ciała chcemy użyć tylko raz możemy
+skorzystać z następującego mechanizmu:
+```
+var a = 2;
+(function foo(){ 
+ var a = 3;
+ console.log( a ); // 3
+})(); 
+console.log( a ); // 2
+```
+Otaczając standardową deklarację funkcji nawiasami czynimy z niej wyrażenie funkcyjne. 
+
+**Jak odróżnić deklarację funkcji od wyrażenia funkcyjnego?**  
+Wystarczy spojrzeć na położenie słowa kluczowego `function`. Jeżeli znajduje się na absolutnie pierwszym miejscu
+mamy do czynienia z deklaracją, w każdym innym przypadku (np. przypisanie funkcji do zmiennej, otoczenie nawiasami) mówi
+się o wyrażeniu funkcyjnym.
+
+#####Anonimowość kontra nazwa
+
+Gdy wyrażenie funkcyjne nie posiada identyfikatora w formie nazwy mówimy o **anonimowym wyrażeniu funkcyjnym**.
+Deklaracja funkcji wymaga identyfikatora, podczas gdy wyrażenie funkcyjne zostawia nam wolną rękę.
+
+Funkcje anonimowe mają liczne zalety. Można je szybciej i łatwiej napisać przez co ich użycie jest faworyzowane przez wiele
+bibliotek i narzędzi. Warto jednak pamiętać o następujących wadach:
+
++ Funkcje anonimowe nie posiadają nazwy przez co trudniej je zidentyfikować podczas debuggowania.
++ Jako, że funkcja nie posiada nazwy utrudnia to odwoływanie się do niej podczas rekurencji. Jesteśmy więc zmuszeni
+do korzystania z wycofanej metody arguments.callee. Innym przykładem konieczności odwoływania się funkcji do samej siebie
+jest odbindowanie funkcji obsługującej wydarzenie po jego wystąpieniu.
++ Brak nazwy może prowadzić do zmniejszenia czytelności kodu.
+
+Wyrażenia funkcyjne inline są bardzo potężną i użyteczną mechaniką. W ten sposób neutralizujemy wady funkcji anonimowych
+nie narażając się na żadne mankamenty. 
+
+**Dobra praktyka:** zawsze nazywaj swoje wyrażenia funkcyjne.
+
+#####Natychmiastowe wywoływanie wyrażeń funkcyjnych
+
+```
+var a = 2;
+(function foo(){
+ var a = 3;
+ console.log(a); // 3
+})();
+console.log(a); // 2
+```
+Otaczając funkcję nawiasami czynimy z niej wyrażenie funkcyjne. Przez dodanie dwóch nawiasów na końcu wyrażenia dochodzi
+do jego natychmiastowego wykonania. 
+
+Jest to na tyle popularna praktyka, że otrzymała własną nazwę: IIFE (ang. _immediately invoked function expression_).
+IIFE nie wymaga nazwy stąd często korzysta się z anonimowych wyrażeń funkcyjnych. Jednak z powodów opisanych powyżej
+warto nazywać swoje IIFE.
+
+Jedną z wariacji IIFE jest wykorzystanie tego, że mamy przecież do czynienia z funkcją, więc możemy jej przekazać argument.
+
+```
+var a = 2;
+(function IIFE(global){
+ var a = 3;
+ console.log(a); // 3
+ console.log(global.a); // 2
+})(window);
+console.log(a); // 2
+```
+
+Kolejnym zastosowaniem tego wzorca jest zabezpieczenie się przed nadpisaniem wartości domyślnego identyfikatora `undefined`,
+co mogłoby spowodować nieoczekiwane skutki uboczne. Nazywając parametr `undefined` bez przypisywania mu wartości mamy pewność,
+że wewnątrz IIFE będziemy mieli do czynienia z domyślną wartością `undefined`.
+
+```
+undefined = true; // karta pułapka!
+(function IIFE(undefined){
+ var a;
+ if (a === undefined) {
+ console.log( "Uf, undefined ocalone!" );
+ }
+})();
+```
