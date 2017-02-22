@@ -125,3 +125,130 @@ Często mówi się, że wzorzec IIFE (opisany w rozdziale trzecim) jest przykła
 nie można się z tym zgodzić ponieważ tego typu funkcje nie są wykonywane poza zakresem leksykalnym. Wartość zmiennej `a` jest
 uzyskiwana za pomocą normalnego procesu wyszukiwania, a nie dzięki domknięciu. Jednak IIFE tworzą własne zakresy, które mogą
 być (i bardzo często są) wykorzystywane w domknięciach.
+
+####Pętle i domknięcie
+
+Jednym z najpopularniejszych (wręcz kanonicznych) przykładów używanych do zaprezentowania
+domknięć jest stara dobra pętla `for`. 
+
+```
+for (var i = 1; i <= 5; i++) {
+  setTimeout(function timer(){
+    console.log(i);
+  }, i * 1000);
+}
+```
+Uwaga: lintery często podkreślają użycie funkcji wewnątrz pętli for jako niepożądaną praktykę. Dopóki wiemy co robimy możemy
+polegać na własnych umiejętnościach pamiętając o tym, że linter nie rozumie wszystkich subtelności zawartych w naszym kodzie.
+
+Moglibyśmy się spodziewać, że powyższy przykład doprowadzi do wydrukowania liczb od `1` do `6` w odstępie 1 sekundy. Nic bardziej mylnego,
+Dochodzi do pięciokrotnego wydrukowania liczby `6` w rzeczonym odstępie. Skąd takie zawirowanie? Mianowicie callback
+uruchamia się dawno po zakończeniu wykonywania pętli (sytuacja wyglądałaby tak samo w przypadku delayu ustawionego na 0).
+Z tego powodu wydrukowany zostaje finalna wartość iteratora równy 6.
+
+Co zrobić, żeby otrzymać pierwotnie oczekiwany rezultat i doprowadzić do złapania każdej z wartości `i`? Zastanówmy się nad
+działaniem zakresu leksykalnego, przy każdej iteracji dochodzi do ponownej deklaracji naszej funkcji i przypisania jej do tego samego
+zakresu globalnego, który zawiera tylko jedno `i`. Przez to wszystkie funkcje zawierają referencję do tego samego `i`.
+
+Potrzebujemy przebudowy przykładu, który pozwoli na efektywniejsze domknięcie zakresu. Spróbujmy do tego wykorzystać IIFE.
+```markdown
+for (var i = 1; i <= 5; i++) {
+  (function(){
+    setTimeout( function timer(){
+      console.log(i);
+    }, i * 1000 );
+  })();
+}
+```
+Niestety, to nie wystarczy - nadal otrzymujemy ten sam rezultat. Oczywiście zakres leksykalny zyskał rozbudowę. Każdy z callbacków
+domyka swój zakres wewnątrz danej iteracji stworzony przez IIFE. Jedynym problemem jest fakt, że utworzony zakres jest... pusty.
+Wystarczy stworzyć zmienną przechowującą aktualny stan i.
+```markdown
+for (var i = 1; i <= 5; i++) {
+  (function(){
+    var j = i;
+    setTimeout( function timer(){
+      console.log(i);
+    }, j * 1000 );
+  })();
+}
+```
+Działa!
+
+Można skorzystać z bardziej wyszukanego rozwiązania dającego ten sam rezultat:
+```markdown
+for (var i = 1; i <= 5; i++) {
+  (function(j){
+    setTimeout( function timer(){
+      console.log(j);
+    }, j * 1000 );
+  })(i);
+}
+```
+Z wykorzystaniem IIFE mogliśmy stworzyć zakres dla każdej iteracji, w którym mieliśmy dostęp do aktualnego stanu `i`.
+
+####Wracając do zakresów blokowych
+
+W rozdziale trzecim poznaliśmy deklarację zmiennej przy pomocy `let`, która tworzy zakres dla bloku. Jest to idealne rozwiązanie
+dla problemu domykania każdej z iteracji pętli z poprzedniego paragrafu.
+```markdown
+for (var i = 1; i <= 5; i++) {
+  let j = i; // zakres blokowy dla naszego domknięcia!
+   setTimeout(function timer(){
+     console.log(j);
+   }, j * 1000 );
+}
+```
+W ten sposób możemy zrezygnować z wykorzystania IIFE dzięki czemu nasz kod staje się bardziej zrozumiały.
+Ale to nie wszystko! Deklaracja `let` ma specjalne zastosowanie w pętlach `for`, mianowicie dochodzi do deklaracji
+zmiennej `i` przy każdej iteracji. 
+```markdown
+for (let i = 1; i <= 5; i++) {
+  setTimeout(function timer(){
+    console.log(i);
+  }, i * 1000 );
+}
+```
+
+####Moduły
+
+Są inne wzorce, które wykorzystują możliwości domknięć lecz na pierwszy rzut oka wcale nie są zwiazane z callbackami.
+Przyjrzyjmy się napotężniejszemu z nich: moduł.
+```markdown
+function CoolModule() {
+  var something = "cool";
+  var another = [1, 2, 3];
+  
+  function doSomething() {
+    console.log(something);
+  }
+  
+  function doAnother() {
+    console.log(another.join("!"));
+  }
+  
+  return {
+    doSomething: doSomething,
+    doAnother: doAnother
+  };
+}
+
+var foo = CoolModule();
+
+foo.doSomething(); // cool
+foo.doAnother(); // 1 ! 2 ! 3
+```
+Taki wzorzec jest właśnie w Javascript nazywany modułem. Najpopularniejszym sposobem implementacji wzorca modułowego jest
+często nazywane odkrywaniem modułu, jego wariacja jest widoczna powyżej.
+
+`CoolModule()` to po prostu funkcja ale trzeba ją wywołać, aby powstała instancja naszego modułu. Bez wykonania funkcji zewnętrznej
+nie doszłoby do powstania zakresu wewnętrznego przez co nie miałyby miejsca wykorzystane domknięcia. `CoolModule()` zwraca
+obiekt oznaczony przez składnię literału obiektowego (ang. _object literal syntax_) `{ key: value, ... }`. Zwrócony obiekt ma
+referencje do wewnętrznych funkcji modułu, a nie do samych zmiennych przechowywujących dane. W ten sposób zmienne pozostają ukryte i prywatne.
+Możemy postrzegać zwrócony obiekt jako publiczne API dla naszego modułu. Aby otrzymać ten sam efekt moglibyśmy zrezygnować z zwracania
+obiektu na rzecz zwrócenia samych funkcji wewnętrznych. W ten sam sposób działa biblioteka jQuery, której publicznym identyfikatorem
+jest $, za którym kryją się zwracane nam funkcje.
+
+Funkcje doSomething() i doAnother() mają domknięcie na wewnętrznym zakresie instancji naszego modułu (powstałego przy wywołaniu
+CoolModule()). Kiedy transportujemy te funkcje poza ich zakres leksykalny za pomocą referencji we właściwościach zwracanego obiektu tworzymy
+warunki do wykorzystania domknięć.
