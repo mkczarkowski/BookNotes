@@ -249,6 +249,74 @@ Możemy postrzegać zwrócony obiekt jako publiczne API dla naszego modułu. Aby
 obiektu na rzecz zwrócenia samych funkcji wewnętrznych. W ten sam sposób działa biblioteka jQuery, której publicznym identyfikatorem
 jest $, za którym kryją się zwracane nam funkcje.
 
-Funkcje doSomething() i doAnother() mają domknięcie na wewnętrznym zakresie instancji naszego modułu (powstałego przy wywołaniu
-CoolModule()). Kiedy transportujemy te funkcje poza ich zakres leksykalny za pomocą referencji we właściwościach zwracanego obiektu tworzymy
+Funkcje `doSomething()` i `doAnother()` mają domknięcie na wewnętrznym zakresie instancji naszego modułu (powstałego przy wywołaniu
+`CoolModule()`). Kiedy transportujemy te funkcje poza ich zakres leksykalny za pomocą referencji we właściwościach zwracanego obiektu tworzymy
 warunki do wykorzystania domknięć.
+
+Upraszczając, istnieją dwa warunki do wykorzystania wzorca modułowego:
+
+1. Musi istnieć zewnętrzna funkcja otaczająca wywołana przynajmniej raz (za każdym razem tworzy ona nową instancję modułu).
+2. Funkcja otaczająca musi zwrócić przynajmniej jedną funkcję wewnętrzną, która będzie posiadała domknięcie na jej prywatnym zakresie.
+Pozwala to na dostęp i modyfikację do prywatnego stanu funkcji otaczającej niezależnie od tego ile czasu minęło od jej wywołania.
+
+Obiekt, który po prostu posiada funkcję jako właściwość nie jest tak naprawdę modułem. Obiekt zwrócony przez funkcję, który
+posiada jedynie właściwości z danymi bez funkcji z domknięciem na zakresie otaczającym nie jest tak naprawdę modułem.
+
+Jeżeli zależy nam na utworzeniu tylko jednej instancji modułu możemy zamienić deklarację naszej funkcji na IIFE:
+```markdown
+var foo = (function CoolModule() {
+             var something = "cool";
+             var another = [1, 2, 3];
+             ... // dalsza część kodu naszego modułu
+           })();
+foo.doSomething(); // "cool"
+foo.doAnother(); // 1 ! 2 ! 3
+```
+Jako, że moduły są tylko specjalną wersją funkcji możemy przekazać do nich parametry:
+```markdown
+function CoolModule(id) {
+  function identify() {
+    console.log(id);
+  }
+  
+  return {
+    identify: identify
+  };
+}
+
+var foo1 = CoolModule("foo 1");
+var foo2 = CoolModule("foo 2");
+
+foo1.identify(); // "foo 1"
+foo2.identify(); // "foo 2"
+```
+Kolejną niewielką lecz przydatną wariacją na wzorcu modułowym jest określenie zwracanego obiektu jako publiczne API:
+```markdown
+var foo = (function CoolModule(id) {
+  function change() {
+    // metoda modyfikująca publiczne API
+    publicAPI.identify = identify2;
+  }
+  
+  function identify1() {
+    console.log(id);
+  }
+  
+  function identify2() {
+    console.log(id.toUpperCase());
+  }
+  
+  var publicAPI = {
+    change: change,
+    identify: identify1
+  };
+  
+  return publicAPI;
+}("foo module");
+
+foo.identify(); // "foo module"
+foo.change();
+foo.identify() // "FOO MODULE"
+```
+Utrzymując referencję do obiektu publicAPI możemy modyfikować instancję naszego modułu od wewnątrz, włączając dodawanie i odejmowanie
+metod oraz właściwości wraz z zmianą ich wartości.
