@@ -1,6 +1,6 @@
 ##Rozdział V - Zakres domknięcia
 
-Domknięcia są czymś naprawdę powszechnym w JS, należy nauczyć się je rozpoznawać i wykorzystywać. Są one
+Domknięcia są czymś naprawdę powszechnym w JS, należy jedynie nauczyć się je rozpoznawać i wykorzystywać. Są one
 naturalnym następstwem pisania kodu w oparciu o zakres leksykalny. 
 
 ####Sedno sprawy
@@ -25,7 +25,7 @@ Czy mamy tutaj do czynienia z kwintesencją domknięcia? Nie do końca, główni
 wyszukiwania w zakresie leksykalnym, co jest tylko (istotną) częścią tego co oferują domknięcia.
 
 Funkcja `bar()` ma domknięcie na zakresie funkcji `foo()` (oraz pozostałymi zakresami, w których jest zagnieżdżona).
-Domknięcie w tym przykładzie nie jest ani bezpośrednio widoczne, ani nie znajduje bezpośrednio wykorzystania.
+Domknięcie w tym przykładzie nie jest ani bezpośrednio widoczne, ani nie znajduje bezpośredniego wykorzystania.
 ```markdown
 function foo() {
   var a = 2;
@@ -92,7 +92,6 @@ skupimy się na udowodnieniu jak powszechne domknięcia są w kodzie pisanym na 
 
 ```markdown
 function wait(message) {
-  
   setTimeout(function timer() {
     console.log(message);
   }, 1000);
@@ -320,3 +319,118 @@ foo.identify() // "FOO MODULE"
 ```
 Utrzymując referencję do obiektu publicAPI możemy modyfikować instancję naszego modułu od wewnątrz, włączając dodawanie i odejmowanie
 metod oraz właściwości wraz z zmianą ich wartości.
+
+#####Moduły obecnie
+
+Różnorakie menadżery zarządzania zależnościami opakowują przedstawiony w poprzednim paragrafie wzorzec modułowy 
+w przyjazne API.
+```markdown
+var MyModules = (function Manager() {
+  var modules = {}'
+  
+  function define(name, deps, impl) {
+    for (var i = 0; i < deps.length; i++) {
+      deps[i] = modules[deps[i]];
+    }
+    modules[name] = impl.apply(impl, deps);
+  } 
+  function get(name) {
+    return modules[name];
+  }
+    
+  return {
+    define: define,
+    get: get
+  };
+})();
+```
+Kluczowym punktem tego kodu jest `modules[name] = impl.apply(impl, deps)`. Jest to wywołanie funkcji opakowującej `define`,
+która zapisuje zwróconą wartość (API naszego modułu) w liście modułów przechowywanych według nazwy.
+
+Praktyczne zastosowanie:
+```markdown
+MyModules.define("bar", [], function() {
+  function hello(who) {
+    return "Let me introduce " + who;
+  }
+  
+  return {
+    hello: hello
+  };
+});
+
+MyModules.define("foo", ["bar"], function(bar) {
+  var hungry = "hippo";
+  
+  function awesome() {
+    console.log(bar.hello(hungry).toUpperCase());
+  }
+  
+  return {
+    awesome: awesome
+  };
+});
+
+var bar = MyModules.get("bar");
+var foo = MyModules.get("foo");
+
+console.log(bar.hello("hippo")); // "Let me introduce: hippo"
+console.log(foo.awesome()); // "LET ME INTRODUCE: HIPPO"
+```
+Zarówno moduły `foo` jak i `bar` są zdefiniowane za pomocą funkcji, która zwraca publiczne API.
+`foo` otrzymuje instancję `bar` jako zależność i używa jej w ten sposób. 
+
+Kod jest bardzo skomplikowany, nie do końca wyobrażam sobie jakbym miał go zastosować przy jakimś projekcie. 
+
+Powyższy przykład ma na celu zobrazowanie, że zarządzaniem modułami odbywa się bez zaangażowania magii (do czego nie jestem
+w pełni przekonany czytając powyższy kod). Widzimy zastosowanie dwóch głównych cech charakterystycznych wzorca modułowego:
+wywoływanie funkcji opakowującej oraz zwracanie wartości w formie API dla modułu. 
+
+#####Przyszłość modułów
+
+ES6 dodaje składnię pierwszej klasy dla modułów. Kiedy korzystamy z systemu ładowania modułów ES6 traktuje plik jako
+oddzielny moduł. Każdy moduł może importować inne moduły lub konkretne części API oraz eksportować te, które są publiczne.
+
+Moduły oparte na funkcjach opisane w poprzednim paragrafie mają dynamiczny charakter, więc nie są brane pod uwagę do czasu
+wykonania. Dzięki temu możemy modyfikować nasze publiczne API w czasie wykonywania kodu (jak w przykładzie z publicAPI).
+
+Sprawa ma się inaczej w przypadku ES6. Nowy system zarządzania modułami jest statyczny. Z tego względu kompilator uprzednio sprawdza
+czy referencja do członka API załadowanego modułu faktycznie istnieje. Jeżeli referencja nie istnieje, kompilator wyrzuca 
+błąd w czasie kompilacji zamiast czekać na tradycyjne, dynamiczne rozwiązanie w czasie wykonywania kodu.
+
+Moduły w ES6 nie mają formatu kolejnych linii naszego programu, muszą być załadowane z oddzielnych plików (jeden plik na moduł).
+Przeglądarka/silnik synchronicznie ładuje plik modułu w momencie zaimportowania.
+```markdown
+// Plik: bar.js
+function hello(who) {
+  return "Let me introduce: " + who;
+}
+
+export hello;
+
+// Plik: foo.js
+
+import hello from "bar";
+
+var hungry = "hippo";
+
+function awesome() {
+  console.log(hello(hungry).toUpperCase());
+}
+
+export awesome;
+
+// Plik: baz.js
+
+module foo from "foo";
+module bar from "bar";
+
+console.log(bar.hello("rhino")); // "Let me introduce: rhino"
+
+foo.awesome(); // "LET ME INTRODUCE: HIPPO"
+```
+`import` pozwala na załadowanie wybranych części API interesującego nas modułu do aktualnego zakresu przywiązując je do konkretnych
+zmiennych (w tym przypadku hello). `module` importuje całe API modułu do zmiennej (w tym przypadku foo i bar). `export` 
+eksportuje identyfikator (zmienną, funkcję) do publicznego API aktualnego modułu. 
+
+Zawartość pliku modułowego jest traktowana jakby była otoczona przez domknięcie zakresu, dokładnie tak samo jak w funkcjach.
