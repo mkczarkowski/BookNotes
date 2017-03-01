@@ -104,7 +104,7 @@ var a = 2;
 Takie mieszanie `strict-mode` i non-`strict-mode` jest czymś niepożądanym. Cały program powinien znajdować się w jednym
 trybie. Naruszenie tej zasady jest uzasadnione jedynie przy użyciu niektórych bibliotek wymagających subtelnej kompatybilności.
 
-#####Niejawne wiązanie
+#####Wiązanie niejawne
 
 Kolejna zasada do rozpatrzenia: czy call-site posiada kontekstowy obiekt, również nazywany obiektem posiadającym lub zawierającym
 lecz te określenia mogą wprowadzać w błąd co do jego natury.
@@ -218,7 +218,145 @@ function setTimeout(fn, delay) {
 }
 ```
 Sytuacja, w której nasze callbacki tracą swoje wiązanie `this` jest częsta, co zaprezentowały powyższe przykłady.
-Inny sposób, w który this może nas zaskoczyć to wtedy, gdy funkcja, której przekazaliśmy callback celowo zmienia `this`
+Inny sposób, w który `this` może nas zaskoczyć to wtedy, gdy funkcja, której przekazaliśmy callback celowo zmienia `this`
 dla tego wywołania. Obsługa zdarzeń w popularnych bibliotekach JS jest czuła na wymuszanie, aby `this` wskazywało element DOM,
 który wywołał zdarzenie. Czasami jest to przydatne rozwiązanie, czasami w żadnym wypadku. Niestety, rzadko możemy dokonać 
 wyboru.
+
+#####Wiązanie jawne
+
+Cały koncept opiera się na wymuszaniu wiązania `this` z wybranym przez nas obiektem bez konieczności tworzenia właściwości
+z referencją do funkcji. 
+ 
+Wszystkie funkcje (z kilkoma wyjątkami) w języku mają taką możliwość (za pomocą swojego `[[Prototype]]`). 
+Najważniejszymi z nich są metody `call()` i `apply()`. 
+
+Jak działają te metody? Każda z nich jako pierwszy parametr przyjmuje obiekt, na który będzie wskazywało `this`. Skoro
+wprost decydujemy na co będzie wskazywało `this` możemy śmiało mówić o **jawnym wiązaniu**.
+```markdown
+function foo() {
+  console.log(this.a);
+}
+
+var obj = {
+  a: 2,
+};
+
+foo.call(obj); // 2
+```
+Wywołanie `foo(`) z jawnym wiązaniem poprzez użycie `foo.call()` pozwala na wymuszenie, aby `this` wskazywało na `obj`.
+
+Jeżeli przekażesz wartość prymitywną (typu `string`, `boolean` lub `number`) jako wiązanie `this`, ta wartość prymitywna
+jest zapakowana w formie obiektu (za pomocą `new String()`, `new Boolean()` lub `new Number()`). Ten proces często nazywany
+jest "boxing".
+
+Warto wiedzieć: w odniesieniu do wiązania this, `call()` i `apply()` są identyczne. Zachowują się inaczej przy dodaniu 
+kolejnych parametrów, co nie jest obecnie istotne.
+
+Niestety, wiązanie jawne samo w sobie nie oferuje rozwiązania dla opisanego wcześniej problemu z funkcjami tracącymi 
+wiązanie `this` albo ich nadpisywaniem przez frameworki.
+
+######Wiązanie twarde
+
+Możemy wykorzystać specjalny wzorzec wiązania jawnego, który załatwi nasz problem.
+```markdown
+function foo() {
+  console.log(this.a);
+}
+
+var obj = {
+  a: 2,
+}
+
+var bar = function() {
+  foo.call(obj);
+}
+
+bar(); // 2
+setTimeout(bar, 100); // 2
+// 'bar' wykonuje twarde wiązanie this 'foo' do 'obj'
+// dzięki temu nie można go nadpisać
+bar.call(window); // 2
+```
+Tworzymy funkcję `bar()`, która w swoim wnętrzu wywołuje `foo.call(obj)` co powoduje wykonanie `foo` z wiązaniem `this` wskazującym
+na `obj`. Nieistotne jak później wywołamy bar, zawsze dojdzie do wykonania `foo` z `obj`. To wiązanie jest zarówno jawne
+jak i silne, stąd nazwa - twarde wiązanie.
+
+Najczęściej spotykany sposób opakowywania funkcji z użyciem wiązania twardego tworzy przejście dla wszystkich przekazanych
+argumentów i wszystkich zwracanych wartości:
+```markdown
+function foo(something) {
+  console.log(this.a, something);
+  return this.a + something;
+}
+
+var obj = {
+  a: 2,
+}
+
+var bar = function() {
+  return foo.apply(obj, arguments);
+};
+
+var b = bar(3); // 2 3
+console.log(b); // 5
+```
+Ten sam wzorzec można zaprezentować przy pomocy pomocnika wielokrotnego użytku (ang. _re-usable helper_).
+```markdown
+function foo(something) {
+  console.log(this.a, something);
+  return this.a + something;
+}
+// nasz pomocnik do tworzenia wiązań
+function bind(fn, obj) {
+  return function() {
+    return fn.apply(obj, arguments);
+  };
+}
+
+var obj = {
+  a: 2,
+};
+
+var bar = bind(foo, obj);
+
+var b = bar(3); // 2 3
+console.log(b); // 5
+```
+Jako, że twarde wiązanie jest tak często używanym wzorcem stanowi on wbudowaną funkcjonalność ES5: `Function.prototype.bind`.
+```markdown
+function foo(something) {
+  console.log(this.a, something);
+  return this.a + something;
+}
+
+var obj = {
+  a: 2,
+}
+
+var bar = foo.bind(obj);
+
+var b = bar(3); // 2 3
+console.log(b); // 5
+```
+`bind()` zwraca nową funkcję, która jest przygotowana do wywołania oryginalnej funkcji z ustawionym przez nas kontekstem `this`.
+
+######"Kontekst" API Call
+
+Wiele bibliotek oraz nowych, wbudowanych funkcji języka JavaScript pozwala na przekazanie opcjonalnego parametru, 
+zwykle nazywanego "kontekstem". Pozwala to na obejście konieczności używania bind(), aby upewnić się, że callback
+będzie używał określonego `this`.
+```markdown
+function foo(el) {
+  console.log(el, this.id);
+}
+
+var obj = {
+  id: "awesome",
+};
+
+// użyj 'obj' jako 'this' dla wywołań 'foo()'
+[1, 2, 3].forEach(foo, obj); // 1 awesome 2 awesome 3 awesome
+```
+
+#####Wiązanie `new`
