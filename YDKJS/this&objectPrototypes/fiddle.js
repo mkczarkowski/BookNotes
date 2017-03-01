@@ -1,8 +1,19 @@
 function foo() {
-    var a = 2;
-    this.bar();
+  console.log(this.a);
 }
-function bar() {
-    console.log(this.a);
-}
-foo(); //ReferenceError: a is not defined
+
+var obj1 = {
+  a: 2,
+  foo: foo,
+};
+
+var obj2 = {
+  a: 3,
+  foo: foo,
+};
+
+obj1.foo(); // 2
+obj2.foo(); // 3
+
+obj1.foo.call(obj2); // 3
+obj2.foo.call(obj1); // 2

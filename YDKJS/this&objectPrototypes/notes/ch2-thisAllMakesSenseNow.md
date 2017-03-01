@@ -344,7 +344,7 @@ console.log(b); // 5
 ######"Kontekst" API Call
 
 Wiele bibliotek oraz nowych, wbudowanych funkcji języka JavaScript pozwala na przekazanie opcjonalnego parametru, 
-zwykle nazywanego "kontekstem". Pozwala to na obejście konieczności używania bind(), aby upewnić się, że callback
+zwykle nazywanego "kontekstem". Pozwala to na obejście konieczności używania `bind()`, aby upewnić się, że callback
 będzie używał określonego `this`.
 ```markdown
 function foo(el) {
@@ -360,3 +360,103 @@ var obj = {
 ```
 
 #####Wiązanie `new`
+
+Ostatnia, czwarta zasada wymaga ponownego zastanowienia się na bardzo częstym błędzie myślowym związanym z funkcjami i
+obiektami w JavaScript.
+
+W tradycyjnych zorientowanych na klasy językach, konstruktory to specjalne metody załączone do klasy, które są wywoływane
+w momencie tworzenia obiektu danej klasy za pomocą słowa kluczowego `new`.
+`something = new MojaKlasa(..);`
+JavaScript posiada operator `new`, aczkolwiek mimo podobnej składni mamy do czynienia z inną mechaniką.
+
+W JS konstruktory to nic innego jak zwyczajne funkcje poprzedzone operatorem new. Nie są załączone do żadnej klasy, nie
+tworzą jej instancji. Nie są nawet specjalnym typem funkcji. Z tego powodu nie możemy mówić o konstruktorach, a raczej
+konstrukcyjnym wywołaniu funkcji.
+
+W momencie konstrukcyjnego wywołania funkcji dochodzi do:
++ powstania nowego obiektu
++ nowo powstały obiekt jest połączony z `[[Prototype]]`
++ nowo powstały obiekt jest ustawiony jako wiązanie `this` dla tego wywołania funkcji
++ jeżeli funkcja nie zwraca innego obiektu, dojdzie do automatycznego zwrócenia `new`'ego obiektu (taki żarcik)
+```markdown
+function foo(a) {
+  this.a = a;
+}
+
+var bar = new foo(2);
+console.log(bar.a); // 2
+```
+Wywołując `foo(..)` za pomocą operatora `new` skonsturowaliśmy nowy obiekt i ustawiliśmy go jako `this` dla tego wywołania `foo(..)`.
+W ten sposób zaprezentowaliśmy jak tworzyć wiązanie za pomocą `new`.
+
+####Wszystko na swoim miejscu
+
+Znając cztery zasady tworzenia wiązań jedyne co pozostaje to odnalezienie call-site i przeanalizowanie, które z zasad
+znajduje zastosowanie. W przypadku występowania kilku zasad jednocześnie odwołujemy się do kolejności pierwszeństwa.
+
+Wiązanie domyślne posiada najniższy priorytet.
+
+```markdown
+function foo() {
+  console.log(this.a);
+}
+
+var obj1 = {
+  a: 2,
+  foo: foo,
+};
+
+var obj2 = {
+  a: 3,
+  foo: foo,
+};
+
+obj1.foo(); // 2
+obj2.foo(); // 3
+
+obj1.foo.call(obj2); // 3
+obj2.foo.call(obj1); // 2
+```
+Jak widać wiązanie jawne ma pierwszeństwo nad wiązaniem niejawnym, więc jego wystąpienie powinno być analizowane w pierwszej
+kolejności.
+```markdown
+function foo(something) {
+  this.a = something;
+}
+
+var obj1 = {
+  foo: foo,
+};
+
+var obj2 = {};
+
+obj1.foo(2);
+console.log(obj1.a); // 2
+
+obj1.foo.call(obj2, 3);
+console.log(obj2.a); // 3
+
+var bar = new obj1.foo(4);
+console.log(obj1.a); // 2
+console.log(bar.a); // 4
+```
+Wiązanie `new` ma pierwszeństwo nad wiązaniem niejawnym. Nie ma możliwości bezpośredniego porównania wiązania jawnego z 
+wiązaniem `new` ponieważ nie możemy użyć tego operatora razem z `call`/`apply`. Do tego porównania użyjemy wiązania twardego.
+```markdown
+function foo(something) {
+  this.a = something;
+}
+
+var obj1 = {};
+
+var bar = foo.bind(obj1);
+bar(2);
+console.log(obj1.a); // 2
+
+var baz = new bar(3);
+console.log(obj1.a); // 2
+console.log(baz.a); // 3
+```
+Wbrew oczekiwaniom po wywołaniu `new bar(3`) nie doszło do zmiany `obj1.a` na `3` jak możnaby się spodziewać. Zamiast tego,
+doszło do nadpisania twardego wiązania `obj1` do `bar(..)` za pomocą `new`. W ten sposób zwróciliśmy nowy obiekt o nazwie `baz`,
+który posiada właściwość `a` równą `3`.
