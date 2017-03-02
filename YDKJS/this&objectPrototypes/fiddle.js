@@ -1,19 +1,12 @@
-function foo() {
-  console.log(this.a);
+function foo(p1, p2) {
+  this.val = p1 + p2;
 }
 
-var obj1 = {
-  a: 2,
-  foo: foo,
-};
+// korzystamy z null ponieważ nie interesuje nas wiązanie twarde
+// i tak zostałoby nadpisane przez 'new'
+var bar = foo.bind(null, "p1");
+var baz = new bar("p2");
+var boozer = new bar("p4");
 
-var obj2 = {
-  a: 3,
-  foo: foo,
-};
-
-obj1.foo(); // 2
-obj2.foo(); // 3
-
-obj1.foo.call(obj2); // 3
-obj2.foo.call(obj1); // 2
+console.log(baz.val); // p1p2
+console.log(boozer.val);

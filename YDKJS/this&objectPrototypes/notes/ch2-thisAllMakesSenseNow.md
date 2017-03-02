@@ -457,6 +457,110 @@ var baz = new bar(3);
 console.log(obj1.a); // 2
 console.log(baz.a); // 3
 ```
-Wbrew oczekiwaniom po wywołaniu `new bar(3`) nie doszło do zmiany `obj1.a` na `3` jak możnaby się spodziewać. Zamiast tego,
-doszło do nadpisania twardego wiązania `obj1` do `bar(..)` za pomocą `new`. W ten sposób zwróciliśmy nowy obiekt o nazwie `baz`,
+Wbrew oczekiwaniom po wywołaniu `new bar(3`) nie nastąpiła zmiana wartości `obj1.a` na `3`. Zamiast tego, doszło do 
+nadpisania twardego wiązania `obj1` do `bar(..)` za pomocą `new`. W ten sposób zwróciliśmy nowy obiekt o nazwie `baz`,
 który posiada właściwość `a` równą `3`.
+
+Aby zrozumieć proces napisywania twardego wiązania przed `new` posłużymy się polyfillem dla `bind(..)` z MDN.
+```markdown
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function(oThis) {
+    if (typeof this !== "function") {
+      // najbliższe rozwiązanie przypominające metodę IsCallable z ES5
+      throw new TypeError("Function.prototype.bind - what " +
+        "is trying to be bound is not callable"
+      );
+    }
+    
+    var aArgs = Array.prototype.slice.call(arguments, 1),
+    fToBind = this,
+    fNOP = function() {},
+    fBound = function() {
+      return fToBind.apply(
+        (
+          this instanceof fNOP &&
+          oThis > this : oThis
+        ),
+          aArgs.concat(Array.prototype.slice.call(arguments))
+        );
+      }
+    ;
+  
+    fNOP.prototype = this.prototype;
+    fBound.prototype = new fNOP();
+  
+    return fBound;
+  };
+}
+```
+Widoczny powyżej przykład jest świetnym przypomnieniem o tym jak wiele jeszcze zostało do nauczenia bo nie rozumiem 
+praktycznie nic. Fragment, który pozwala na nadpisywanie przez `new`:
+```markdown
+this instanceof fNOP &&
+oThis ? this : oThis
+
+// oraz
+
+fNOP.prototype = this.prototype;
+fBound.prototype = new fNOP();
+```
+Nie wdając się w szczegóły tego skomplikowanego kodu, w ten sposób decydujemy czy funkcja z twardym wiązaniem została 
+wywołana za pomocą `new`. Jeżeli tak, to korzystamy z nowo utworzonego `this` zamiast wcześniej stworzonego wiązania twardego.
+
+Na czym polega użyteczność tego rozwiązania? Głównym powodem jest utworzenie nowej funkcji, która ignoruje dotychczasowe
+wiązanie `this` ale zachowuje część lub wszystkie jej argumenty. Jedną z cech `bind(..)` jest zachowanie argumentów (przekazanych
+po pierwszym wskazującym na `this`) jako standardowe argumenty dla stworzonej funkcji (nazwa techniczna: "partial application",
+jedna z części "currying").
+```markdown
+function foo(p1, p2) {
+  this.val = p1 + p2;
+}
+
+// korzystamy z null ponieważ nie interesuje nas wiązanie twarde
+// i tak zostałoby nadpisane przez 'new'
+var bar = foo.bind(null, "p1");
+var baz = new bar("p2");
+
+baz.val; // p1p2
+```
+#####Zasady pierwszeństwa `this`
+
+1. Czy funkcja została wywołana przez `new` (wiązanie `new`)? Jeżeli tak, `this` wskazuje na nowo utworzony obiekt.  
+
+   `var bar = new foo();`
+
+2. Czy funkcja została wywołana przez `call`/`apply` (wiązanie jawne), nawet ukrytymi przez `bind` (wiązanie twarde)?
+Jeżeli tak, `this` wskazuje na przekazany w metodzie obiekt.  
+
+   `var bar = foo.call(obj2);`
+
+3. Czy funkcja została wywołana przy pomocy kontekstu (wiązanie niejawne), innymi słowy przez obiekt posiadający/zawierający?
+Jeżeli tak, `this` wskazuje na ten obiekt kontekstowy.
+
+   `var bar = obj1.foo();`
+   
+4. W innym przypadku doszło do utworzenia wiązania domyślnego. Jeżeli korzystamy ze `strict mode`, przyjmie wartość `undefined`.
+Jeżeli nie, będzie to obiekt globalny.
+
+   `var bar = foo();`
+
+####Wyjątki w wiązaniach
+
+Jak zwykle, mamy do czynienia z wyjątkami, które za nic mają sobie wypisane przed chwilą reguły.
+
+#####Zignorowane `this`
+
+Jeżeli przekażemy `null` lub `undefined` jako parametr wiązania `this` do `call`, `apply` lub `bind` zostanie on zignorowany.
+Dochodzi w takim wypadku do wiązania domyślnego.
+```markdown
+function foo() {
+  console.log(this.a);
+}
+
+var a = 2;
+
+foo.call(null); // 2
+```
+Po co mielibyśmy przekazywać `null` do wiązania `this`? Częstą praktyką jest używanie `apply(..)`, aby rozproszyć elementy
+tablicy na parametry wywoływanej funkcji. W ten sam sposób wykorzystuje się `bind(..)` do ustawiania standardowych wartości
+parametrów.
