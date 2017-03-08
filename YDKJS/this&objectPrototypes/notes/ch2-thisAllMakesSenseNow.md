@@ -551,7 +551,7 @@ Jak zwykle, mamy do czynienia z wyjątkami, które za nic mają sobie wypisane p
 #####Zignorowane `this`
 
 Jeżeli przekażemy `null` lub `undefined` jako parametr wiązania `this` do `call`, `apply` lub `bind` zostanie on zignorowany.
-Dochodzi w takim wypadku do wiązania domyślnego.
+Dochodzi w takim wypadku do stworzenia wiązania domyślnego.
 ```markdown
 function foo() {
   console.log(this.a);
@@ -564,3 +564,163 @@ foo.call(null); // 2
 Po co mielibyśmy przekazywać `null` do wiązania `this`? Częstą praktyką jest używanie `apply(..)`, aby rozproszyć elementy
 tablicy na parametry wywoływanej funkcji. W ten sam sposób wykorzystuje się `bind(..)` do ustawiania standardowych wartości
 parametrów.
+```markdown
+function foo(a, b) {
+  console.log("a: " + a + ", b:" + b);
+}
+//rozpraszanie elementów na parametry
+foo.apply(null, [2, 3]); // a: 2, b: 3
+
+// currying z bind(..) (ustawienie parametru domyślnego 2)
+var bar = foo.bind(null, 2);
+bar(3); // a: 2, b: 3
+```
+W takich sytuacjach mimo, że nie obchodzi nas wskaźnik this musimy przekazać do metod obiekt w miejsce pierwszego parametru.
+`null` idealnie nadaje się do tego nadaje.
+
+Warto wiedzieć: W ES6 wprowadzono operator rozproszenia `...` (ang. _spread operator_), który pozwala na rozproszenie elementów
+tablicy na parametry bez użycia `apply(..)`. `foo(...[1, 2])` odpowiada `foo(1, 2)`. 
+
+Korzystając z tego rozwiązania w połączeniu z bibliotekami musimy pamiętać o tym, że niektóre z funkcji mogą wykorzystywać `this`.
+W takich wypadkach utworzone zostanie wiązanie domyślne co może spowodować trudne do wykrycia błedy.
+
+**Bezpieczniejsze `this`**
+
+Aby uniknąć kłopotów z wiązaniem domyślnym możemy przekazać do funkcji specjalnie przygotowany obiekt co ubezpieczy nas
+przed nieprzewidzianymi skutkami ubocznymi. Do tego celu wystarczy nam pusty, niedelegowany obiekt (opisany w rodziałach 5 i 6).
+Najprostszym sposobem na jego stworzenie jest `Object.create(null)` (rozdział 5). `Object.create(null)` jest podobne do `{ }`
+ale nie posiada delegacji do `Object.prototype`.
+```markdown
+function foo(a, b) {
+  console.log("a: " + a + ", b: " + b);
+}
+// pusty obiekt na potrzeby bind()
+var empty = Object.create(null);
+
+// rozproszenie elementów tablicy na parametry
+foo.apply(empty, [2, 3]); // a: 2, b: 3
+
+// currying przy pomocy 'bind(..)'
+var bar = foo.bind(empty, 2);
+bar(3); // a: 2, b: 3
+```
+
+#####Kierunek pośredni
+
+Warto pamiętać (celowo lub nie), że można tworzyć "pośrednie referencje" do funkcji. W tym przypadku przy ich wywołaniu
+powstaje wiązanie domyślne. Referencja pośrednia powstaje najczęściej podczas przypisania.
+```markdown
+function foo() {
+  console.log(this.a);
+}
+
+var a = 2;
+var o = { a: 3, foo: foo };
+var p = { a: 4 };
+
+o.foo(); // 3
+(p.foo = o.foo)(); // 2
+```
+`p.foo = o.foo` jest referencją do obiektu funkcyjnego `foo`. Z tego względu naszym call-site'm jest samo `foo()`, a nie 
+`p.foo()` czy `o.foo()` - stąd wiązanie domyślne.
+
+#####Łagodząc wiązanie
+
+Twarde wiązanie mimo swoich zalet ma jedną zasadniczą wadę, ogranicza elastyczność. Możemy dostarczyć inną wartośc dla
+wiązania domyślnego jednocześnie nie nadpisując wszystkich niejawnych/jawnych wiązań `this`.
+```markdown
+if (!Function.prototype.softBind) {
+  Function.prototype.softBind = function(obj) {
+    var fn = this;
+      curried = [].slice.call(arguments, 1),
+      bound = function bound() {
+        return fn.apply(
+          (!this ||
+            (typeof window !== "undefined" &&
+              this === window) ||
+            (typeof global !== "undefined" &&
+              this ==== global)
+          ) ? obj: this,
+          curried.concat.apply(curried, arguments)
+        );
+      };
+    bound.prototype = Object.create(fn.prototype);
+    return bound;
+  };
+}
+```
+Nasz `softBind` różni się od implementacji `bind(..)` z ES5. Przypisuje `obj` do `this` tylko w przypadku, gdy wartość `this`
+jest równa `global` lub `undefined` - w pozostałych przypadkach `this` pozostaje nietknięte.
+```markdown
+function foo() {
+  console.log("name: " + this.name);
+}
+
+var obj = { name: "obj", };
+var obj2 = { name: "obj2", };
+var obj3 = { name: "obj3", };
+
+var fooOBJ = foo.softBind(obj);
+
+fooOBJ(); // name: obj
+
+obj2.foo = foo.softBind(obj);
+obj2.foo(); // name: obj2 <---- ojacie!
+
+fooOBJ.call(obj3); // name: obj3 <---- ojaaciee!
+
+setTimeout(obj2.foo, 10); // name: obj <---- powrót do łagodnego wiązania
+```
+####Leksykalne `this`
+
+Tradycyjne funkcje przestrzegają czterech zasad opisanych powyżej, jednak ES6 wprowadziło nowy typ funkcji. Chodzi o 
+funkcje strzałkowe, których te zasady nie dotyczą.
+```markdown
+function foo() {
+  return (a) => {
+    console.log(this.a);
+  };
+}
+
+var obj1 = {
+  a: 2,
+};
+
+var obj2 = {
+  a: 3,
+};
+
+var bar = foo.call(obj1);
+bar.call(obj2); // 2, nie 3!
+```
+Funkcja strzałkowa stworzona wewnątrz `foo()` leksykalnie przechwytuje wartość `this` w momencie wywołania. Wartość jaką
+przyjmie w ten sposób `this` nie może być nadpisana przez jakiekolwiek wiązanie (nawet przez `new`!).
+```markdown
+function foo() {
+  var self = this;
+  setTimeout(() => {
+    // 'this' jest leksykalnie przypisane do 'self
+    console.log(self.a);
+  }, 100);
+}
+
+var obj = {
+  a: 2,
+};
+
+foo.call(obj); // 2
+```
+Warto zdecydować się na jedne podejście do wiązań, korzystamy z tradycyjnej mechaniki ES5 lub nowej, opartej o funkcje 
+strzałkowe z ES6 korzystając z `self = this`. Oczywiście sam język pozwala nam na mieszanie obydwóch podejść ale nasz kod
+będzie trudniejszy do utrzymania.
+
+####Podsumowanie
+
+Cztery zasady wiązania `this`:
+
+1. Wywołane przez `new`? Użyj nowo utworzonego obiektu.
+2. Wywołane przez `call` lub `apply`? Użyj przekazanego obiektu.
+3. Wywołane przez obiekt kontekstowy? Użyj tego obiektu kontekstowego.
+4. Wiązanie domyślne? Non-strict: `global`, strict: `undefined`.
+
+Korzystasz z funkcji strzałkowej? `this` przyjmie wartość leksykalną.
