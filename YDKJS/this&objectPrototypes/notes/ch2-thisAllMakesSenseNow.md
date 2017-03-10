@@ -6,7 +6,7 @@ Aby zrozumieć wiązanie `this`, należy zrozumieć call-site: jest to lokalizac
 do wywołania funkcji (nie mylić z miejscem deklaracji). Musimy przeanalizować call-site aby odpowiedzieć na pytanie:
 na co wskazuje `this`?
 
-Ważne jest to, aby brać pod uwagę call-stack (stos funkcji, który został wywołany aby dotrzeć do obecnego momentu wykonania).
+Ważne jest to, aby brać pod uwagę call-stack (stos, który wskazuje historię wywoływanych funkcji).
 Call-site, który nas interesuje znajduje się **w** wywołaniu **przed** obecnie wykonywaną funkcją.
 ```markdown
 function baz() {
@@ -102,12 +102,12 @@ var a = 2;
 })();
 ```
 Takie mieszanie `strict-mode` i non-`strict-mode` jest czymś niepożądanym. Cały program powinien znajdować się w jednym
-trybie. Naruszenie tej zasady jest uzasadnione jedynie przy użyciu niektórych bibliotek wymagających subtelnej kompatybilności.
+trybie. Naruszenie tej zasady jest uzasadnione jedynie przy użyciu niektórych bibliotek wymagających subtelnego podejścia do kompatybilności.
 
 #####Wiązanie niejawne
 
-Kolejna zasada do rozpatrzenia: czy call-site posiada kontekstowy obiekt, również nazywany obiektem posiadającym lub zawierającym
-lecz te określenia mogą wprowadzać w błąd co do jego natury.
+Kolejna zasada do rozpatrzenia: czy call-site posiada kontekstowy obiekt, również nazywany obiektem posiadającym lub zawierającym 
+(te określenia mogą wprowadzać w błąd co do jego natury).
 ```markdown
 function foo() {
   console.log(this.a);
@@ -150,8 +150,8 @@ obj1.obj2.foo(); // 42
 
 ######Niejawna strata
 
-Jedną z największy frustracji związanych z wiązaniem `this` jest, gdy niejawne wiązanie zostaje utracone, co najczęściej 
-oznacza odwołaniem się do wiązania domyślnego, z obiektem globalnym lub `undefined` w zależności od strict mode.
+Jedna z największy frustracji związanych z wiązaniem `this` pojawia się, gdy niejawne wiązanie zostaje utracone, co najczęściej 
+oznacza odwołaniem się do wiązania domyślnego z obiektem globalnym lub `undefined` w zależności od strict mode.
 ```markdown
 function foo() {
   console.log(this.a);
@@ -169,7 +169,7 @@ var a = "oops, global"; // 'a' jest jednocześnie właściwością obiektu globa
 bar(); // "oops, global"
 ```
 Mimo, że `bar` pozornie stanowi referencję do `obj.foo` tak naprawdę jest tylko referencją do samego `foo`. Poza tym,
-interesuje nas call-site, a call-site bar() jest zwyczajnym, pojedynczym wywołaniem, więc zastosowane zostaje wiązanie domyślne.
+interesuje nas call-site, a call-site `bar()` jest zwyczajnym, pojedynczym wywołaniem, więc zastosowane zostaje wiązanie domyślne.
 
 Ten sam proces, co prawda bardziej subtelny, a jednocześnie częściej występujący i mniej oczekiwany zachodzi przy przekazaniu 
 funkcji callback:
@@ -250,7 +250,7 @@ Jeżeli przekażesz wartość prymitywną (typu `string`, `boolean` lub `number`
 jest zapakowana w formie obiektu (za pomocą `new String()`, `new Boolean()` lub `new Number()`). Ten proces często nazywany
 jest "boxing".
 
-Warto wiedzieć: w odniesieniu do wiązania this, `call()` i `apply()` są identyczne. Zachowują się inaczej przy dodaniu 
+Warto wiedzieć: w odniesieniu do wiązania `this`, `call()` i `apply()` są identyczne. Zachowują się inaczej przy dodaniu 
 kolejnych parametrów, co nie jest obecnie istotne.
 
 Niestety, wiązanie jawne samo w sobie nie oferuje rozwiązania dla opisanego wcześniej problemu z funkcjami tracącymi 
@@ -280,7 +280,7 @@ bar.call(window); // 2
 ```
 Tworzymy funkcję `bar()`, która w swoim wnętrzu wywołuje `foo.call(obj)` co powoduje wykonanie `foo` z wiązaniem `this` wskazującym
 na `obj`. Nieistotne jak później wywołamy bar, zawsze dojdzie do wykonania `foo` z `obj`. To wiązanie jest zarówno jawne
-jak i silne, stąd nazwa - twarde wiązanie.
+jak i silne, stąd nazwa - wiązanie twarde.
 
 Najczęściej spotykany sposób opakowywania funkcji z użyciem wiązania twardego tworzy przejście dla wszystkich przekazanych
 argumentów i wszystkich zwracanych wartości:
@@ -391,11 +391,10 @@ W ten sposób zaprezentowaliśmy jak tworzyć wiązanie za pomocą `new`.
 
 ####Wszystko na swoim miejscu
 
-Znając cztery zasady tworzenia wiązań jedyne co pozostaje to odnalezienie call-site i przeanalizowanie, które z zasad
+Znając cztery zasady tworzenia wiązań jedyne co pozostaje to odnalezienie call-site i przeanalizowanie, która z zasad
 znajduje zastosowanie. W przypadku występowania kilku zasad jednocześnie odwołujemy się do kolejności pierwszeństwa.
 
 Wiązanie domyślne posiada najniższy priorytet.
-
 ```markdown
 function foo() {
   console.log(this.a);
