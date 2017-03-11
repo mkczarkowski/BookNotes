@@ -102,4 +102,65 @@ Składnia `.a` jest zwykle określana jako dostęp za pomocą właściwości, po
 klucza. Obydwa sposoby dają dostęp do tej samej lokalizacji przez co otrzymujemy tę samą wartość, `2`.
 
 Zasadnicza różnica pomiędzy tymi operatorami dostępu polega na tym, że operator `.` wymaga nazwy właściwości zgodnej z 
-`Identifier`, podczas gdy składnia `[".."]` przyjmuje jakiegokolwiek stringa kompatybilnego z UTF-8/unicode.
+`Identifier`, podczas gdy składnia `[".."]` przyjmuje jakiegokolwiek stringa kompatybilnego z UTF-8/unicode. Aby uzyskać
+dostęp do wartości przechowywanej w lokalizacji, do której referencję posiada właściwość "Super-Fun!" musimy skorzystać
+z składni: `["Super-Fun!"]`, ponieważ taka nazwa nie jest zgodna z `Identifier`.
+
+W notacji `[..]` korzystamy ze stringów aby określić lokalizację co daje nam możliwość wygenerowania wartości
+tych stringów w czasie wykonywania programu.
+```markdown
+var wantA = true;
+var myObject = {
+  a: 2,
+};
+
+var idx;
+
+if (wantA) {
+  idx = "a"
+}
+
+// później
+
+console.log(myObject[idx]); // 2
+```
+W obiektach nazwy właściwości **ZAWSZE** są stringami. Jeżeli użyjesz innej wartości prymitywnej zostanie ona przekonwertowana
+do stringa. Tyczy się to również `number`, które są najczęściej używane jako indeksy w tablicach, więc należy rozrózniać
+ich zachowanie pomiędzy obiektami, a tablicami.
+```markdown
+var myObject = { };
+
+myObject[true] = "foo";
+myObject[3] = "bar";
+myObject[myObject] = "baz";
+
+myObject["true"]; // "foo"
+myObject["3]; // "bar"
+myObject["[object Object]"]; // baz
+```
+#####Wyliczone nazwy właściwości
+
+Notacja dostępu z użyciem `[..]` jest użyteczna, gdy chcemy skorzystać z wartości wyrażenia wyliczonego podczas wykonywania
+kodu. W ES6 umożliwiono wykonywanie działań na stringach podczas dosłownej formy deklarowania obiektu.
+```markdown
+var prefix = "foo";
+
+var myObject = {
+  [prefix + "bar"]: "hello",
+  [prefix + "baz"]: "world",
+};
+
+myObject["foobar"]; // hello
+myObject["foobaz"]; // world
+```
+Wyliczone nazwy właściwości najprawdopodobniej będą używane w połączeniu z `Symbol`ami, czyli nowym prymitywnym typem
+danych wprowadzonym w ES6. `Symbol` trochę przypomina stringa ale każda jego instancja jest unikatowa. Dzięki temu uzyskujemy
+większe bezpieczeństwo w kwestii uzyskiwania dostępu do zawartości obiektu.
+```markdown
+const MY_KEY = Symbol();
+let obj = {
+  [MY_KEY]: 123
+};
+console.log(obj[MY_KEY]); // 123
+console.log(obj["MY_KEY"]); // undefined
+```
