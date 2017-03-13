@@ -429,3 +429,367 @@ myObject.b = 3;
 myObject.b; // undefined
 ```
 W `non-strict mode` próba utworzenia `b` stanowi ciche niepowodzenie, w `strict mode` wyrzucony zostaje `TypeError`.
+
+**Pieczęć**
+
+`Object.seal(..)` tworzy "zapieczentowany" obiekt, czyli najzwyczajniej wywołuje na nim `Object.preventExtensions(..)` i
+ustawia deskryptor `configurable` wszystkich jego właściwości na `false`.
+
+**Freeze**
+
+`Object.freeze(..)` tworzy zamrożony obiekt, czyli wywołuje na nim `Object.seal(..)` i ponadto ustawia deskryptor `writable`
+na `false`. To rozwiązanie zapewnia najwyższy stopień niezmienności jaki możemy uzyskać dla obiektu. 
+
+#####**`[[Get]]`**
+
+Warto zastanowić się nad szczegółami procesu uzyskiwania dostępu do właściwości.
+```markdown
+var myObject = {
+  a: 2,
+};
+
+myObject.a; // 2
+```
+myObject.a to dostęp do właściwości, ale nie polega na przeszukaniu `myObject` i odnalezieniu właściwości o nazwie `a`.
+Zgodnie z specyfikacją dochodzi do wykonania operacji `[[Get]]`. Składa się z dwóch części: przeszukania obiektu i działania
+związanego z rezultatem tych poszukiwań. Jeżeli właściwość została odnaleziona to zostaje zwrócona jej wartość, jeżeli nie
+to jest przeszukiwany łańcuch `[[Prototype]]`. Jeżeli ta operacja również skutkuje niepowodzeniem zwrócone zostaje `undefined`.
+
+Ten mechanizm nie obowiazuje w przypadku wyszukiwania zmiennych w oparciu o ich identyfikator. Jeżeli zmienna nie istnieje
+w zakresie leksykalnym to dochodzi do wyrzucenia `ReferenceError`.
+```markdown
+var myObject = {
+  a: undefined
+};
+
+myObject.a; // undefined
+myObject.b; // undefined
+```
+Z punktu widzenia zwróconej wartości dwie powyższe operacje są identyczne - otrzymujemy `undefined`. Jednakże `[[Get]]` wykonało
+większą ilość operacji w przypadku `myObject.b`, niż `myObject.a`. Skupiając się jedynie na zwróconej wartości nie jesteśmy
+w stanie odróżnić czy właściwość posiadała jawnie przypisaną wartość `undefined` czy nie została w ogóle odnaleziona w obiekcie.
+
+#####**`[[Put]]`**
+
+Mechanika `[[Put]]` jest zależna od wielu czynników, przede wszystkim od tego czy właściwość istnieje już w obiekcie.
+
+Jeżeli właściwość istnieje w obiekcie, algorytm `[[Put]]` sprawdzi czy:
+
++ Właściwość jest deskryptorem dostępu (Getter/Setter)? Wywołaj setter'a.
++ Właściwość jest deskryptorem danych z `writable` ustawionym na `false`? Wykonaj cichą porażkę w `non-strict mode` lub
+wyrzuć `TypeError` w `strict mode`.
++ W każdym innym przypadku normalnie ustaw wartość istniejącej właściwości.
+
+Jeżeli właściwość nie istnieje w obiekcie, mechanika [[Put]] staje się bardziej skomplikowana i zostanie opisana w rozdziale
+5 dotyczącym prototypów.
+
+#####Gettery i Settery
+
+ES5 wprowadziło częściową możliwość nadpisywania domyślnych operacji `[[Get]]` i `[[Put]]` na poziomie samych właściwości, a 
+nie całego obiektu. Służą do tego gettery i settery. Getter to właściwość, która niejawnie wywołuje funkcję zwracającą wartość.
+Setter to właściwość, która niejawnie wywołuje funkcje, aby przypisać wartość.
+
+Kiedy przypiszemy getter lub setter do właściwości jej definicja staje się `deskryptorem dostępu` zamiast `deskryptorem danych`.
+Dla deskryptorów dostępu cechy `value` i `writable` sporne i ignorowane zamiast nich silnik JS bierze pod uwagę cechy `get` i `set`.
+```markdown
+var myObject = {
+  // definicja getter dla 'a'
+  get a() {
+    return 2;
+  }
+};
+
+Object.defineProperty(
+  myObject, // cel
+  "b", // nazwa właściwości
+  {
+    // definicja gettera dla 'b'
+    get: function() { return this.a * 2 },
+    
+    enumerable: true
+  }
+);
+
+myObject.a; // 2
+myObject.b; // 4
+```
+Obydwa sposoby, dosłowne zdefiniowanie `get a() { .. }` oraz jawna definicja z użyciem `Object.defineProperty(..)` pozwalają
+na utworzenie właściwości, która nie przechowuje wartości. Dostęp do danych jest zapewniony przez ukrytą funkcję wywoływaną
+przez gettera.
+```markdown
+var myObject = {
+  get a() {
+    return 2;
+  }
+};
+
+myObject.a = 3;
+
+myObject.a; // 2
+```
+Skoro zdefiniowaliśmy jedynie getter dla `a`, to późniejsza próba przypisania wartości `3` do `a` skutkuje cichym niepowodzeniem.
+Nawet gdyby istniał setter to zwykła operacja przypisania zostałaby zignorowana. Stąd konieczność definiowania zarówno
+getterów jak i setterów, inaczej musimy się liczyć z nieoczekiwanymi/zaskokującymi zachowaniami silnika.
+```markdown
+var myObject = {
+  // zdefiniuj getter dla 'a'
+  get a() {
+    return this._a_;
+  },
+  
+  // zdefiniuj setter dla 'a'
+  set a(val) {
+    this._a_ = val * 2;
+  }
+};
+
+myObject.a = 2;
+myObject.a; // 4
+```
+W tym przykładzie podana wartość 2 jest przechowywana w innej zmiennej, `_a_`. Takie nazewnictwo to zwykła konwencja, nie implikuje
+żadnej specjalnej mechaniki.
+
+#####Egzystencja
+
+Udowodniliśmy wcześniej, że dostęp do właściwości jak np. `myObject.a` może skutkować zwróceniem `undefined` zarówno w przypadku
+jawnego ustawienia tej wartości, jak i gdy `a` nigdy nie zostało zdefiniowane. Aby sprawdzić, który ze scenariuszy zaistniał
+w konkretnym przypadku możemy się posłużyć metodą `hasOwnProperty(..)` lub operatorem `in`.
+```markdown
+var myObject = {
+  a: 2
+};
+
+("a" in myObject); // true
+("b" in myObject); // false
+myObject.hasOwnProperty("a"); // true
+myObject.hasOwnProperty("b"); // false
+```
+Operator `in`  sprawdza czy właściwość jest w obiekcie albo wyższym poziomie łańcucha `[[Prototype]]`. Podczas gdy 
+`hasOwnProperty(..)` sprawdza tylko i wyłącznie zawartość samego obiektu nie konsultując się z wyższymi poziomami łańcucha
+`[[Prototype]]`. 
+
+Metoda `hasOwnProperty(..)` jest dostępna dla każdego obiektu posiadającego delegację do `Object.prototype`. Istnieje możliwość
+utworzenia obiektu, który nie posiada takiej delegacji za pomocą `Object.create(null)`. W takim wypadku wywołanie `hasOwnProperty(..)`
+skutkuje wyrzuceniem `TypeError`.
+
+Bardziej rozrosłym sposobem na wykonanie tej operacji jest `Object.prototype.hasOwnProperty.call(myObject, "a")`. Tworzymy
+jawne wiązanie `this` z `myObject` i wywołujemy metodę wprost z prototypu.
+
+Warto wiedzieć: operator in sprawdza obiekt tylko pod kątem nazwy właściwości, a nie przechowywanej wartości, więc nie można
+go używać do przeszukiwania tablicy. Operacja `4 in [1, 2, 4]` zwraca `false`, podczas gdy `0 in [1, 2, 4]` zwraca `true`.
+
+`Enumeracja`
+
+```markdown
+var myObject = { };
+
+Object.defineProperty(
+  myObject,
+  "a",
+  // zezwól na enumerację 'a'
+  { enumerable: true, value: 2 }
+);
+
+Object.defineProperty(
+  myObject,
+  "b",
+  // wyłącz enumerację dla 'b'
+  { enumerable: false, value: 3 }
+);
+
+myObject.b; // 3
+("b" in myObject); // true
+myObject.hasOwnProperty("b"); // true
+
+for (var k in myObject) {
+  console.log(k, myObject[k]);
+}
+// "a" 2
+```
+Jak widać `myObject.b` istnieje jako dostępna wartość, ale nie jest drukowana z poziomu pętli `for..in` (jednak jest widoczna
+dla operatora `in`). Stąd `enumerable` możemy rozumieć jako 'będzie włączone w skład iterowanych właściwości'.
+
+Warto wiedzieć: zastosowanie pętli `for..in` na tablicy skutkuje nieoczekiwanymi rezultatami, ponieważ uzyskujemy dostęp nietylko
+do indeksów ale i wszystkich pozostałych policzalnych właściwości. Stąd pętla `for..in` powinna być używana tylko dla zwykłych obiektów,
+podczas gdy do innych celów należy wykorzystywać tradycyjną pętlę `for`.
+```markdown
+var myObject = { };
+
+Object.defineProperty(
+  myObject,
+  "a",
+  { enumerable: true, value: 2 }
+);
+
+Object.defineProperty(
+  myObject,
+  "b",
+  { enumerable: false, value: 3 }
+);
+
+myObject.propertyIsEnumerable("a"); // true
+myObject.propertyIsEnumerable("b"); // false
+
+Object.keys(myObject); // ["a"]
+Object.getOwnPropertyNames(myObject); // ["a", "b"]
+```
+Metoda `propertyIsEnumerable(..)` sprawdza czy właściwość istnieje wewnątrz obiektu oraz czy deskryptor enumerable jest ustawiony na `true`.
+Metoda `Object.keys(..)` zwraca tablicę wszystkich policzalnych właściwości, podczas gdy `Object.getOwnPropertyNames(..)` zwraca 
+tablicę wszystkich właściwości, policzalnych lub nie.
+
+Póki co nie istnieje sposób na zdobycie wszystkich właściwości o mechanice analogicznej do operatora `in` (czyli włącznie
+z przeszukaniem wyższych poziomów łańcucha `[[Prototype]]`).
+
+####Iterowanie
+
+Pętla for..in iteruje po liście nazw policzalnych właściwości (włącznie z łańcuchem `[[Prototype]]`). Co zrobić, gdy chcemy
+iterować po wartościach?
+
+W przypadku numerycznie indeksowanych tablic iteracja po wartościach jest możliwa z użyciem pętli `for`.
+```markdown
+var myArray = [1, 2, 3];
+
+for (var i = 0; i < myArray.length; i++) {
+  console.log(myArray[i]);
+}
+// 1 2 3
+```
+Niestety, nie jest to iteracja po wartościach per se, tylko iterowanie po indeksach w celu uzyskania referencji do wartości.
+
+ES5 wprowadziło kilka pomocników w iterowaniu po tablicach takich jak `forEach(..)`, `every(..)` oraz `some(..)`. Każdy z tych
+pomocników przyjmuje jako parametr callback wywoływany na każdym z elementów tablicy, odróżnia je reakcja na otrzymaną z callbacka
+wartość. 
+
+`forEach(..)` iteruje po wszystkich wartościach tablicy i ignoruje zwracaną przez callbacka wartość. `every(..`) iteruje dopóki
+callback nie zwróci `false`/wartości falsy. `some(..)` iteruje dopóki callback nie zwróci `true`/wartości truthy.
+
+Mechanika `every(..)` oraz `some(..)` przypomina trochę wyrażenie `break` wewnątrz normalnej pętli `for`.
+
+**Warto wiedzieć**: w przeciwieństwie do tablic, iterując po obiekcie nie mamy gwarancji zachowania kolejności w dostępie do
+właściwości. 
+
+Jeżeli zależy nam na iteracji wprost po wartościach zamiast po indeksach tablicy możemy skorzystać z wprowadzonej w ES6 pętli `for..of`. 
+Pętle można zastosować na obiektach jeżeli zdefiniujemy własny iterator.
+```markdown
+var myArray = [1, 2, 3];
+
+for (var v of myArray) {
+  console.log(v);
+}
+// 1
+// 2
+// 3
+```
+Pętla `for..of` wykonuje zapytanie do iteratora obiektu (w oparciu o wewnętrzną funkcję `@@iterator`) o następny element
+do iterowania, po czym wykonuje iterację na otrzymanej wartości i ponownie wywołuje metodę `next()`.
+
+Tablice mają wbudowany `@@iterator`, więc `for..of` działa na nich bez zarzutu. Wykonajmy manualną iterację, aby zaprezentować
+mechanikę `@@iterator`.
+```markdown
+var myArray = [1, 2, 3];
+var it = myArray[Symbol.iterator]();
+
+it.next(); // { value: 1, done: false }
+it.next(); // { value: 2, done: false }
+it.next(); // { value: 3, done: false }
+it.next(); // { done: true }
+```
+Warto wiedzieć: Uzyskujemy dostęp do `@@iteratora`, wewnętrznej właściwości obiektu za pomocą `Symbol`u ES6: `Symbol.iterator`.
+Takie użycie `Symbol`u zapewnia unikalność referencji do specjalnej właściwości. Nazwa może być myląca ale `@@iterator` nie jest
+obiektem iteracyjnym, a funkcją która zwraca ten obiekt. 
+
+Jak widać w powyższym przykładzie przy wywołaniu metody `next()` na iteratorze otrzymujemy wartość obecnie iterowanego elementu
+w właściwości `value` oraz informację o tym czy mamy jeszcze po czym iterować w właściwości `done`.
+
+Wartość `3` jest zwrócona z `done: false`, dopiero po czwartym wywołaniu `next()` otrzymujemy `done: true`.
+
+Zwykłe obiekty nie posiadają wbudowanego `@@iterator`a. Wynika to z przyczyn bezpieczeństwa. Zawsze lepiej okroić implementację, jeżeli
+może ona spowodować problemy w działaniu niektórych obiektów. Mamy możliwośc manualnego zdefiniowana `@@iterator`a dla naszych obiektów.
+```markdown
+var myObject = {
+  a: 2,
+  b: 3,
+};
+
+Object.defineProperty(myObject, Symbol.iterator, {
+  enumerable: false,
+  writable: false,
+  configurable: true,
+  value: function() {
+    var o = this;
+    var idx = 0;
+    var ks = Object.keys(o);
+    return {
+      next: function() {
+        return {
+          value: o[ks[idx++]],
+          done: (idx > ks.length)
+        }
+      }
+    };
+  }
+});
+
+// manualna iteracja po 'myObject'
+var it = myObject[Symbol.iterator]();
+it.next(); // { value: 2, done: false }
+it.next(); // { value: 3, done: false }
+it.next(); // { value: undefined, done: true }
+
+// iteracja po 'myObject' z użyciem pętli 'for..of'
+for (var v of myObject) {
+  console.log(v);
+}
+// 2
+// 3
+```
+Wykorzystaliśmy `Object.defineProperty(..)` do stworzenia `@@iterator`a (głównie ze względu na możliwość ustawienia niepoliczalności),
+jednocześnie stosując `Symbol` jako wyliczoną nazwę właściwości. Możnaby użyć go jawnie w nastepujący sposób:
+`var myObject = { a: 2, b: 3, [Symbol.iterator]: function() { /* .. */ } }`. 
+
+Pętla for..of daje nam wiele możliwości tworzenia własnych, bardziej skomplikowanych iteratorów dostosowanych do potrzeb
+programu. Na przykład, lista obiektów `Pixel` (z wartościami kordynatów `x` oraz `y`) mogłaby korzystać z porządku iteracji
+opartego o odległości od współrzędnych `(0, 0)`.
+
+Możemy również stworzyć iteratory, które nigdy nie docierają do końca obiektu i cały czas zwracają nowe wartości (np. pseudolosowe, 
+inkrementowane, unikalne identyfikatory, etc). Jednak nie należy używać takich iteratorów bez odpowiedniej pętli `for..of`,
+ponieważ działałaby w nieskończoność.
+```markdown
+var randoms = {
+  [Symbol.iterator]: function() {
+    return {
+      next: function() {
+        return { value: Math.random() };
+      }
+    };
+  }
+};
+
+var random_pool = [];
+for (var n of randoms) {
+  randoms_pool.push(n);
+   
+  if (randoms_pool.length === 100) break;
+}
+```
+
+####Podsumowanie
+
+Obiekty w JS mogą przyjmować formę dosłowną taką jak `var a = { .. }` oraz wartość konstruowaną taką jak `var a = new Array(..)`.
+
+Wiele osób mylnie stwierdza, że wszystko w JS jest obiektem. Obiekty to jedna z sześciu wartości prymitywnych. Obiekty
+posiadają podtypy take jak `function` czy zorientowane na konkretną mechanike `[object Array]` będące reprezentacją tablicy w JS.
+
+Obiekty są kolekcjami par kluczy i wartości. Dostęp do właściwości uzyskiwany jest za pomocą składni `.propName` lub `["propName"]`.
+Przy każdym dostępie do właściwości silnik wywołuje wewnętrzną domyślną operację `[[Get]]` (lub `[[Put]]` dla ustawiania wartości), która
+nietylko przeszukuje sam obiekt ale i wyższe poziomy łańcucha `[[Prototype]]`.
+
+Obiekty posiadają cechy, które mogą być kontrolowane za pomocą deskryptorów właściwości takich jak `writable`, `configurable`
+czy `enumerable`. Mamy również możliwość ustawiania stopnia zmienności obiektu za pomocą `Object.preventExtensions(..)`, 
+`Object.sale(..`) oraz `Object.freeze(..)`.
+
+Właściwości nie muszą przechowywać wartości - moga być getterami albo setterami znanymi jako deskryptory dostępu. 
+
+Mamy możliwość bezpośredniego iterowania po wartościach struktury danych za pomocą `for..of` wprowadzonego w ES6. 
+Korzysta ona z wbudowanego lub zdefiniowanego `@@iterator`a, który składa się z metody `next()` służącej do przekazywania
+kolejnych elementów struktury.
