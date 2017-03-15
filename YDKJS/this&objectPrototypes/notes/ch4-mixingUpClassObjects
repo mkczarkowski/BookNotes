@@ -207,3 +207,232 @@ dziedziczy z dwóch klas rodziców "B" i "C". Obydwie dziedziczą z klasy "A" po
 nadpisuje tę metodę za pomocą polimorfizmu. Którą implementacje ma odziedziczyć "D"? `B:drive()` czy `C:drive()`?
 
 JavaScript nie posiada wbudowanego mechanizmu dziedziczenia wielokrotnego, aby uniknąć tego typu komplikacji. 
+
+####Miksowanie
+
+Mechanizm obiektowy w JS nie wykonuje automatycznego kopiowania zachowań podczas dziedziczenia czy instancjonowania. 
+W JS najzwyczajniej nie ma czegoś takiego jak "klasa" do zainicjowania, mamy tylko obiekty, które nie są do siebie kopiowane
+lecz są ze sobą łączone.
+
+Jako, że nie mamy do czynienia z wbudowanym kopiowaniem przeanalizujemy jak developerzy miksują ten proces w jawny i niejawny sposób.
+
+#####Jawne miksowanie
+
+Wrócimy do przykładu `Vehicle` oraz `Car`. Stworzymy funkcjonalność, która manualnie skopiuje dziedziczone zachowanie.
+W większości bibliotek ten mechanizm nazywa się `extend(..)`, w tym przykładzie posłużymy się `mixin(..)`.
+```markdown
+//uproszczona metoda "mixin(..)"
+function mixin(sourceObj, targetObj) {
+  for (var key in sourceObj) {
+    // kopiuj tylko, gdy właściwość nie została jeszcze zdefiniowana
+    if (!(key in targetObj)) {
+      targetObj[key] = sourceObj[key];
+    }
+  }
+  
+  return targetObj;
+}
+
+var Vehicle = {
+  engines: 1,
+  
+  ignition: function() {
+    console.log("Turning on my engine.");
+  },
+  
+  drive: function() {
+    this.ignition();
+  }
+};
+
+var Car = mixin(Vehicle, {
+  wheels: 4,
+  
+  drive: function() {
+    Vehicle.drive.call(this);
+    console.log("Rolling on all " + this.wheels + " wheels!");
+  }
+});
+```
+**Warto zauważyć**: Nie mamy do czynienia z klasami, `Vehicle` i `Car` to obiekty.
+
+`Car` posiada teraz kopię właściwości i funkcji z `Vehicle`. Technicznie rzecz biorąc, funkcje nie są tak naprawdę
+zduplikowane, a jedynie utworzono do nich referencje. `Car` posiada właściwość `ignition` jest skopiowaną referencją
+do funkcji `ignition()`. `Car` posiadał właściwość `drive`, więc nie doszło do nadpisania tej referencji. 
+
+#####Wracając do "polimorfizmu"
+
+Przeanalizujmy to wyrażenie: `Vehicle.drive.call.(this)`. Możemy to nazwać "jawnym pseudo-polimorfizmem". Wracając do wcześniejszego
+przykładu, korzystaliśmy z `inherited: drive()` nazywanego "polimorfizmem relatywnym".
+
+JS nie posiada (przed ES6) mechanizmu polimorfizmu relatywnego. W przypadku funkcji o tej samej nazwie: `drive()`
+występującej zarówno w `Car` jak i `Vehicle`, aby rozróżnić jedną od drugiej musimy bezwzględnie się do niej odwołać.
+
+Jeżeli ograniczylibyśmy się do `Vehicle.drive()`, wiązanie `this` cały czas wskazywałoby na `Vehicle` zamiast na `Car`.
+Stąd dodatek w postaci `.call(this)`, który zapewnia nas, że wiązanie zostanie utworzone w oparciu o obiekt `Car`.
+
+Jak widać koszt utrzymania takiego kodu wzrasta z każdą kolejną przykrytą funkcją, która wymaga od nas "jawnego pseudo-polimorfizmu".
+Dodatkowo zmniejszeniu ulega czytelność i wzrasta poziom skomplikowania naszego kodu.
+Z tego powodu mechanizm "jawnego pseudo-polimorfizmu" powinien być unikany za wszelką cenę.
+
+**Kopiowanie podczas miksowania**
+```markdown
+function mixin(sourceObj, targetObj) {
+  for (var key in sourceObj) {
+    // kopiuj tylko, gdy właściwość nie została jeszcze zdefiniowana
+    if (!(key in targetObj)) {
+      targetObj[key] = sourceObj[key];
+    }
+  }
+  
+  return targetObj;
+}
+```
+Przeanalizujmy sposób działania `mixin(..)`. Iteruje po właściwościach `sourceObj` (`Vehicle` w naszym przykładzie) i jeżeli
+nie odnajdzie właściwości o danej nazwie w `targetObj` (`Car` w naszym przykładzie), tworzy jej kopię. Skoro kopia ma być
+utworzona w istniejącym już obiekcie musimy się upewnić, że nie dojdzie do nadpisania. 
+
+Gdybyśmy zdecydowali się na uprzednie kopiowanie, przed stworzeniem zawartości `Car` moglibyśmy zrezygnować z takiego środka
+ostrożności. Jednakże jest to rozwiązanie mniej efektywne i podatne na błędy.
+```markdown
+function mixin(sourceObj, targetObj) {
+  for (var key in sourceObj) {
+    targetObj[key] = sourceObj[key];
+  }
+  
+  return targetObj;
+}
+
+var Vehicle = {
+  // ..
+}
+
+// pierw, stwórz pusty obiekt z przekopiowaną zawartością 'Vehicle'
+var Car = mixin(Vehicle, {});
+
+mixin({
+  wheels: 4,
+  
+  drive: function() {
+    // ...
+  }
+}, Car);
+```
+Kopiując w ten sposób, `Car` jest niejako niezależne od `Vehicle`. Jeżeli dodamy właściwość do `Car` nie wpłynie to
+na zawartość `Vehicle` i na odwrót.
+
+Warto zauważyć: Są sytuacje, w których te obiekty mogą na siebie oddziaływać już po zakończeniu operacji kopiowania,
+ze względu na współdzielone referencje. 
+
+Skoro dochodzi do współdzielenia referencji do funkcji można wywnioskować, że nie zachodzi faktyczne kopiowanie jak w przypadku
+klas i ich instancji. Gdybyśmy zmienili zawartość obiektu funkcyjnego (np. `ignition()`) chociażby poprzez dodanie do niego właściwości
+wpłynelibyśmy zarówno na `Vehicle` jak i `Car`.
+
+Jawny pseudo-polimorfizm jest sprawnie działającym mechanizmem w JS, lecz jest znacznie silniejszy, niż się zdaje.
+Nie zyskujemy wiele korzyści z pseudo-kopiowania właściwości w porównaniu z zdefiniowaniem właściwości podwójnie, 
+raz dla każdego z obiektów. 
+
+**Dziedziczenie pasożytnicze**
+
+Wariacja jawnego miksowana, która jednocześnie jest procesem jawnym jak i niejawnym, nazywana jest "dziedziczeniem pasożytniczym".
+Zyskała popularność dzięki Douglas'owi Crockford'owi.
+```markdown
+// "Tradycyjna klasa w JS"
+function Vahicle() {
+  this.engines = 1;
+}
+Vehicle.prototype.ignition = function() {
+  console.log("Turning on my engine.");
+};
+Vehicle.prototype.drive = function() {
+  this.ignition();
+  console.log("Steering and moving forward!");
+};
+
+//Pasożytnicza klasa 'Car'
+function Car() {
+  // pierw 'car' jest przedstawicielem 'Vehicle'
+  var car = new Vehicle();
+  
+  // zmodyfikujmy nasz 'car', aby nadać mu specjalizację
+  car.wheels = 4;
+  
+  // zapisujemy referencję do 'Vehicle::drive()'
+  var vehDrive = car.drive;
+  
+  //nadpisujemy 'Vehicle::drive()'
+  car.drive = function() {
+    vehDrive.call(this);
+    console.log("Rolling on all " + this.wheels + " wheels!");
+  };
+  
+  return car;
+}
+
+var myCar = new Car();
+
+myCar.drive();
+// Turning on my engine.
+// Steering and moving forward!
+// Rolling on all 4 wheels!
+```
+Jak widać pierw utworzyliśmy obiekt "rodzica" `Vehicle`, zmieszaliśmy go z elementami 'dziecka' w definicji, po czym 
+zwróciliśmy efekt tego połączenia jako obiekt `car`.
+
+**Warto wiedzieć**: Stosując `new Car()`, tworzymy nowy obiekt z wiązaniem do `this` w `Car`. Jednakże ten obiekt nie jest użyty, a
+zwracamy utworzony obiekt `car`, więc dochodzi do jego natychmiastowego usunięcia. Możemy zrezygnować z `new` zachowując funkcjonalność,
+jednocześnie oszczedzając zasoby niepotrzebnie używane podczas tworzenia i usuwania obiektu.
+
+#####Niejawne miksowanie
+
+Niejawne miksowanie jest ściśle związane z "jawnym pseudo-polimorfizmem", stąd posiada te same wady.
+```markdown
+var Something = {
+  cool: function() {
+    this.greeting = "Hello World";
+    this.count = this.count ? this.count + 1 : 1;
+  }
+};
+
+Something.cool();
+Something.greeting; // "Hello World"
+Something.count; // 1
+
+var Another = {
+  cool: function() {
+    // niejawne miksowanie 'Something' z 'Another'
+    Something.coo.call(this);
+  }
+};
+
+Another.cool();
+Another.greeting; // "Hello World"
+Another.count; // 1 (nie dzieli stanu z 'Something')
+```
+Za pomocą `Something.cool.call(this)` dokonujemy "zapożyczenia" funkcji `Something.cool()` i wywołania jej w kontekście
+`Another` (za pomocą jawnego wiązania `this`) zamiast `Something`. Stąd przypisania wykonywane przez `Something.cool()` są aplikowane
+do obiektu `Another`, a nie do obiektu `Something`.
+
+Niestety to rozwiązanie wymaga od nas bezwzględnego wskazywania rodzica, więc nie posiada zalet polimorfizmu relatywnego.
+
+####Podsumowanie
+
+Klasy to wzorzecz projektowy. Wiele języków zapewnia składnię, która jest naturalnie zorientowana na klasy. JS posiada taki syntax,
+ale zachowuje się kompletnie inaczej.
+
+Klasy oznaczają kopie.
+
+Tworząc instancję tradycyjnej klasy, zachodzi kopiowanie zachowań klasy do instancji. Kiedy klasy są dziedziczone, również
+zachodzi kopiowanie zachowań z rodzica do dziecka.
+
+Polimorfizm (posiadania różnych funkcji o tej samej nazwie na różnych poziomach dziedziczenia) może sprawiać wrażenie, jakby
+implikował relatywne połączenie dziecka z powrotem do rodzica ale są rezultatem kopiowania zachowań.
+
+JavaScript nie dokonuje automatycznego kopiowania pomiędzy obiektami.
+
+Wzorzec miksowania jest wykorzystywany do imitiowania kopiowania zachowań przez klasy, na ogół prowadzi do brzydkiego i
+ciężkiego w utrzymaniu kodu. 
+
+Jawne miksowanie nie oddaje tego czym są kopie powstałe na bazie klasy, ponieważ zapewnia jedynie dzielone referencje,
+a nie unikalne kopie obiektów/funkcji.
+
