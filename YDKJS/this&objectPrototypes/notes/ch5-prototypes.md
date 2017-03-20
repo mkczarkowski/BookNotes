@@ -163,3 +163,96 @@ Taka nazwa przynosi wiele szkód z powodu nieścisłości jakie powstają chcąc
 dziedziczenie znane z klas i połączenia prototypowe. "Dziedziczenie" implikuje powstawanie kopii, co nie zachodzi w JS.
 W przypadku połączeń obiektów w JS mamy raczej do czynienia z "delegowaniem".
 
+##### "Konstruktory"
+
+```markdown
+function Foo() {
+  // ...
+}
+
+var a = new Foo();
+```
+Co karze nam sądzić, że `Foo` jest klasą?
+
+Po pierwsze, użyte zostało słowo kluczowe `new`, które w językach zorientowanych na klasy służą do konstruowania instancji klas.
+Po drugie, wygląda na to, że wywołaliśmy konstruktor, ponieważ `Foo()` jest zadeklarowaną metodą, dokładnie jak w przypadku
+normalnych klas.
+```markdown
+function Foo() {
+  // ...
+}
+
+Foo.prototype.constructor = Foo; // true
+
+var a = new Foo();
+a.constructor === Foo(); // true
+```
+Obiekt `Foo.prototype` domyślnie (w pierwszej linii kodu) otrzymuje publiczną, niepoliczalną właściwość `.constructor`.
+Ta właściwość jest referencją do funkcji, z którą związany jest obiekt. Ponadto, wygląda jakby obiekt `a` stworzony poprzez
+wywołanie "konstruktora" `new Foo()` posiadał właściwość `.constructor`, która również wskazuje na funkcję, która go "stworzyła".
+
+**Warto wiedzieć**: Powyższe spostrzeżenia nie są zgodne z prawdą. Obiekt `a` nie posiada właściwości `.constructor`, mimo że
+`a.constructor` faktycznie wskazuje na `Foo`. "constructor" wcale nie znaczy "został skonstruowany przez".
+
+Kolejnym znakiem wskazującym na to, że mamy do czynienia z klasą jest konwencja nazewnicza, według której funkcje nazwane
+z dużej litery są klasami. Jest ona na tyle zakorzeniona w społeczności, że lintery często podkreślają użycie `new` wraz 
+z metodą nazwaną z małej litery. Nie ma to **żadnego** wpływu na działanie silnika.
+
+**Konstruktor czy wywołanie?**
+
+Na podstawie powyższego przykładu możemy pochopnie nazwać `Foo` konstruktorem.
+
+W rzeczywistości, `Foo` w niczym nie przypomina konstruktora bardziej, niż jakakolwiek inna funkcja. Funkcje nie są same
+w sobie konstruktorami. Jednakże, gdy umieścimy `new` przed zwykłą funkcją, czyni to wywołanie funkcji "wywołaniem konstruktora".
+W ten sposób funkcja zachowuje swoje dotychczasowe działanie jednocześnie tworząc nowy obiekt.
+```markdown
+function NothingSpecial() {
+  console.log("Don't mind me!");
+}
+
+var a = new NothingSpecial();
+// "Don;t mind me!"
+
+a; // {}
+```
+`NothingSpecial` jest zwykłą funkcją, lecz gdy zostaje wywołana wraz z `new` konstruuje obiekt, niemal jako efekt uboczny,
+który zostaje przypisany do `a`. Wywołanie było wywołaniem konstrukcyjnym, lecz `NothingSpecial` samo w sobie nie jest konstruktorem.
+
+Tak więc, w JavaScript, najodpowiedniej nazywać "konstruktorem" jakąkolwiek funkcję wywołaną z `new`. Funkcje nie są
+konstruktorami, lecz wywołanie funkcji z `new` jest wywołaniem konstrukcyjnym.
+
+##### Mechanika
+
+Czy wymieniliśmy już wszystkie sposoby imitowania klas w JS?
+
+Nie do końca.
+```markdown
+function Foo(name) {
+  this.name = name;
+}
+
+Foo.prototype.myName = function() {
+  return this.name;
+};
+
+var a = new Foo("a");
+var b = new Foo("b");
+
+a.myName(); // "a"
+b.myName(); // "b"
+```
+Powyższy przykład prezentuje dwa kolejne triki imitowania orientacji klasowej:
+1. `this.name = name`: dodajemy właściwość `.name` do każdego obiektu wskazywanego przez wiązanie `this`. W podobny sposób
+instancje klasy dokonują hermetyzacji danych.
+2. `Foo.prototype.myName = ...`: dodajemy właściwość do obiektu `Foo.prototype`. `a.myName()` działa zgodnie z przewidywaniami.
+
+Można by myśleć, że w momencie powstania `a` i `b` właściwości/funkcje z obiektu `Foo.prototype` są kopiowane do `a` i `b`.
+Nic bardziej mylnego.
+
+Na początku rozdziału wyjaśniliśmy połączenie `[[Prototype]]` i to jak zapewnia podkładkę dla wyszukiwania, gdy właściwość
+nie zostanie odnaleziona bezpośrednio wewnątrz obiektu podczas wykonywania domyślnej operacji `[[Get]]`.
+
+Tak więc zgodnie z sposobem utworzenia, obiekty `a` i `b` posiadają wewnętrzne `[[Prototype]]`'owe połączenie z `Foo.prototype`.
+Gdy `myName` nie jest odnalezione wewnątrz `a` i `b`, zostaje wyszukane w `Foo.prototype`.
+
+**Redux "konstruktora"**
