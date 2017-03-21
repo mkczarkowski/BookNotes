@@ -1,6 +1,6 @@
-##**Rozdział II - `this` All Makes Sense Now!**
+## **Rozdział II - `this` All Makes Sense Now!**
 
-####Call-site
+#### Call-site
 
 Aby zrozumieć wiązanie `this`, należy zrozumieć call-site: jest to lokalizacja w kodzie gdzie doszło
 do wywołania funkcji (nie mylić z miejscem deklaracji). Musimy przeanalizować call-site aby odpowiedzieć na pytanie:
@@ -41,14 +41,14 @@ skorzystanie z debuggera w przeglądarce. Wystarczy ustawić breakpoint na `foo(
 w pierwszej linii. W czasie wykonywania kodu debugger wykona pausę na danej linii kodu i zaprezentuje listę wywołanych dotąd
 funkcji - czyli nasz call stack. Drugi element od góry na naszej liście to rzeczony call-site.
 
-####Liczą się tylko zasady
+#### Liczą się tylko zasady
 
 Musimy skoncentrować naszą uwagę na tym gdzie `this` będzie wskazywało podczas wykonywania funkcji.
 
 Należy przyjrzeć się call-site i dojść do tego, która z czterech zasad zostanie zastosowana. Pierw opiszemy każdą z czterech
 zasad osobno, a następnie przedstawimy kolejność ich stosowania oraz sytuacje zastosowania kilku zasad jedocześnie.
 
-#####Wiązanie domyślne
+##### Wiązanie domyślne
 
 Pierwsza zasada pochodzi z najczęściej występującej sytuacji: samodzielnego wywołania funkcji. Zasada ta znajduje swoje
 zastosowanie gdy żadna inna nie wchodzi w grę.
@@ -104,7 +104,7 @@ var a = 2;
 Takie mieszanie `strict-mode` i non-`strict-mode` jest czymś niepożądanym. Cały program powinien znajdować się w jednym
 trybie. Naruszenie tej zasady jest uzasadnione jedynie przy użyciu niektórych bibliotek wymagających subtelnego podejścia do kompatybilności.
 
-#####Wiązanie niejawne
+##### Wiązanie niejawne
 
 Kolejna zasada do rozpatrzenia: czy call-site posiada kontekstowy obiekt, również nazywany obiektem posiadającym lub zawierającym 
 (te określenia mogą wprowadzać w błąd co do jego natury).
@@ -148,7 +148,7 @@ var obj1 = {
 obj1.obj2.foo(); // 42
 ```
 
-######Niejawna strata
+###### Niejawna strata
 
 Jedna z największy frustracji związanych z wiązaniem `this` pojawia się, gdy niejawne wiązanie zostaje utracone, co najczęściej 
 oznacza odwołaniem się do wiązania domyślnego z obiektem globalnym lub `undefined` w zależności od strict mode.
@@ -223,7 +223,7 @@ dla tego wywołania. Obsługa zdarzeń w popularnych bibliotekach JS jest czuła
 który wywołał zdarzenie. Czasami jest to przydatne rozwiązanie, czasami w żadnym wypadku. Niestety, rzadko możemy dokonać 
 wyboru.
 
-#####Wiązanie jawne
+##### Wiązanie jawne
 
 Cały koncept opiera się na wymuszaniu wiązania `this` z wybranym przez nas obiektem bez konieczności tworzenia właściwości
 z referencją do funkcji. 
@@ -256,7 +256,7 @@ kolejnych parametrów, co nie jest obecnie istotne.
 Niestety, wiązanie jawne samo w sobie nie oferuje rozwiązania dla opisanego wcześniej problemu z funkcjami tracącymi 
 wiązanie `this` albo ich nadpisywaniem przez frameworki.
 
-######Wiązanie twarde
+###### Wiązanie twarde
 
 Możemy wykorzystać specjalny wzorzec wiązania jawnego, który załatwi nasz problem.
 ```markdown
@@ -341,7 +341,7 @@ console.log(b); // 5
 ```
 `bind()` zwraca nową funkcję, która jest przygotowana do wywołania oryginalnej funkcji z ustawionym przez nas kontekstem `this`.
 
-######"Kontekst" API Call
+###### "Kontekst" API Call
 
 Wiele bibliotek oraz nowych, wbudowanych funkcji języka JavaScript pozwala na przekazanie opcjonalnego parametru, 
 zwykle nazywanego "kontekstem". Pozwala to na obejście konieczności używania `bind()`, aby upewnić się, że callback
@@ -359,7 +359,7 @@ var obj = {
 [1, 2, 3].forEach(foo, obj); // 1 awesome 2 awesome 3 awesome
 ```
 
-#####Wiązanie `new`
+##### Wiązanie `new`
 
 Ostatnia, czwarta zasada wymaga ponownego zastanowienia się na bardzo częstym błędzie myślowym związanym z funkcjami i
 obiektami w JavaScript.
@@ -389,7 +389,7 @@ console.log(bar.a); // 2
 Wywołując `foo(..)` za pomocą operatora `new` skonsturowaliśmy nowy obiekt i ustawiliśmy go jako `this` dla tego wywołania `foo(..)`.
 W ten sposób zaprezentowaliśmy jak tworzyć wiązanie za pomocą `new`.
 
-####Wszystko na swoim miejscu
+#### Wszystko na swoim miejscu
 
 Znając cztery zasady tworzenia wiązań jedyne co pozostaje to odnalezienie call-site i przeanalizowanie, która z zasad
 znajduje zastosowanie. W przypadku występowania kilku zasad jednocześnie odwołujemy się do kolejności pierwszeństwa.
@@ -522,7 +522,7 @@ var baz = new bar("p2");
 
 baz.val; // p1p2
 ```
-#####Zasady pierwszeństwa `this`
+##### Zasady pierwszeństwa `this`
 
 1. Czy funkcja została wywołana przez `new` (wiązanie `new`)? Jeżeli tak, `this` wskazuje na nowo utworzony obiekt.  
 
@@ -543,11 +543,11 @@ Jeżeli nie, będzie to obiekt globalny.
 
    `var bar = foo();`
 
-####Wyjątki w wiązaniach
+#### Wyjątki w wiązaniach
 
 Jak zwykle, mamy do czynienia z wyjątkami, które za nic mają sobie wypisane przed chwilą reguły.
 
-#####Zignorowane `this`
+##### Zignorowane `this`
 
 Jeżeli przekażemy `null` lub `undefined` jako parametr wiązania `this` do `call`, `apply` lub `bind` zostanie on zignorowany.
 Dochodzi w takim wypadku do stworzenia wiązania domyślnego.
@@ -604,7 +604,7 @@ var bar = foo.bind(empty, 2);
 bar(3); // a: 2, b: 3
 ```
 
-#####Kierunek pośredni
+##### Kierunek pośredni
 
 Warto pamiętać (celowo lub nie), że można tworzyć "pośrednie referencje" do funkcji. W tym przypadku przy ich wywołaniu
 powstaje wiązanie domyślne. Referencja pośrednia powstaje najczęściej podczas przypisania.
@@ -623,7 +623,7 @@ o.foo(); // 3
 `p.foo = o.foo` jest referencją do obiektu funkcyjnego `foo`. Z tego względu naszym call-site'm jest samo `foo()`, a nie 
 `p.foo()` czy `o.foo()` - stąd wiązanie domyślne.
 
-#####Łagodząc wiązanie
+##### Łagodząc wiązanie
 
 Twarde wiązanie mimo swoich zalet ma jedną zasadniczą wadę, ogranicza elastyczność. Możemy dostarczyć inną wartośc dla
 wiązania domyślnego jednocześnie nie nadpisując wszystkich niejawnych/jawnych wiązań `this`.
@@ -670,7 +670,7 @@ fooOBJ.call(obj3); // name: obj3 <---- ojaaciee!
 
 setTimeout(obj2.foo, 10); // name: obj <---- powrót do łagodnego wiązania
 ```
-####Leksykalne `this`
+#### Leksykalne `this`
 
 Tradycyjne funkcje przestrzegają czterech zasad opisanych powyżej, jednak ES6 wprowadziło nowy typ funkcji. Chodzi o 
 funkcje strzałkowe, których te zasady nie dotyczą.
@@ -713,7 +713,7 @@ Warto zdecydować się na jedne podejście do wiązań, korzystamy z tradycyjnej
 strzałkowe z ES6 korzystając z `self = this`. Oczywiście sam język pozwala nam na mieszanie obydwóch podejść ale nasz kod
 będzie trudniejszy do utrzymania.
 
-####Podsumowanie
+#### Podsumowanie
 
 Cztery zasady wiązania `this`:
 

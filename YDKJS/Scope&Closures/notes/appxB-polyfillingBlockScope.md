@@ -1,4 +1,4 @@
-##**Załącznik B - Uzupełnianie (_ang. polyfilling_)  zakresu blokowego**
+## **Załącznik B - Uzupełnianie (_ang. polyfilling_)  zakresu blokowego**
 
 W rozdziale trzecim omówiliśmy zakres blokowy. Podaliśmy dwa przykłady generowania tego zakresu przed ES6, chodzi o `with`
 i `catch`.
@@ -25,7 +25,7 @@ w domu.
 Jakby nie patrzeć jest to "poprawny" sposób na wykorzystanie zakresu blokowego w środowisku przed-ES6. Oczywiście nikt
 nie będzie samodzielnie pisał czegoś takiego ale teraz wiemy jak radzą sobie narzędzia transpilujące kod ES6 do ES5.
 
-####Traceur
+#### Traceur
 
 Jest to projekt utrzymywany przez Google, który odpowiada za transpilowanie ES6 do ES5 (głównie!), aby kod pozostawał użyteczny
 w starszych środowiskach. Komitet TC39 polega na tym narzędziu podczas testowania semantyki wprowadzanych zmian.
@@ -44,7 +44,7 @@ Co Traceur stworzyłby z naszego pierwszego przykładu?
 console.log(a);
 ```
 
-####Jawne kontra niejawne bloki
+#### Jawne kontra niejawne bloki
 
 Przyjrzyjmy się tej alternatywnej formie użycia `let` nazywanej **blokiem `let`** lub **wyrażeniem `let`** (w przeciwieństwie do używanej
 najczęściej **deklaracji `let`**).
@@ -81,7 +81,7 @@ użyciem deklaracji let.
 
 Repozytorium let-er'a: https://github.com/getify/let-er
 
-####Wydajność
+#### Wydajność
 
 Szybka notka na temat wydajności try/catch i jednoczesna odpowiedź na pytanie: "Dlaczego nie użyć IIFE do stworzenia zakresu?"
 

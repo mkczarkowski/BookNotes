@@ -1,8 +1,8 @@
-##Rozdział 3 - zakres funkcji vs zakres bloków
+## Rozdział 3 - zakres funkcji vs zakres bloków
 
 W powszechnym obiegu utrwaliła się opinia o tym, że w JS jedynie funkcje tworzą własne zakresy. Nie jest to prawdą.
 
-####Zakres na podstawie funkcji
+#### Zakres na podstawie funkcji
 
 ```
 function foo(a) {
@@ -27,7 +27,7 @@ console.log(a, b, c); // ReferenceError dla każdego z identyfikatorów
 Taka mechanika zachęca do korzystania z zadeklarowanych w zakresie funkcji zmiennych w całym jej ciele 
 (również w zakresach zagnieżdżonych funkcji). 
 
-####Ukrycie w zwykłym zakresie
+#### Ukrycie w zwykłym zakresie
 
 Standardowa procedura myślenia o funkcjach zakłada ich deklarację, po czym dodanie kodu do ich ciała.
 Warto wykorzystać całkowicie odwrotne spojrzenie i wykorzystać funkcję jako formę ukrycia kodu w nowym zakresie.
@@ -69,7 +69,7 @@ W ten sposób `b` i `doSomethingElse()` nie są dostępne z zewnętrznych zakres
 `doSomething()`. Funkcjonalność i efekt końcowy nie uległ zmianie przy jednoczesnym wzroście bezpieczeństwa co świadczy
 o przydatności tej zasady projektowania.
 
-####Unikanie kolizji
+#### Unikanie kolizji
 
 Kolejna zaletą ukrywania zmiennych i funkcji w zakresie jest unikanie niechcianych kolizji pomiędzy dwoma identyfikatorami o
 tej samej nazwie lecz innym planowanym przeznaczeniu. Kolizja często skutkuje nieoczekiwanym nadpisaniem wartości.
@@ -91,7 +91,7 @@ Gdyby przypisanie wewnątrz `bar()` wyglądało w następujący sposób: `var i 
 Doszłoby do zaciemnienia zmiennej `i` z pętli for na rzecz tej zadeklarowanej w zagnieżdżonym zakresie. Moglibyśmy również
 zdecydować się na zupełnie inny identyfikator, np. `var j = 3;` (o ile struktura programu na to pozwala).
 
-#####Globalna przestrzeń nazw
+##### Globalna przestrzeń nazw
 
 Nietrudno wyobrazić sobie sytuację kolizji zmiennych w zakresie globalnym. Biorąc pod uwagę mnogość
 załadowanych bibliotek, może dojść do ich kolizji jeżeli nie ukrywają one swoich prywatnych funkcji i zmiennych.
@@ -99,14 +99,14 @@ Aby ustrzec się przed kolizjami dla każdej biblioteki zadeklarowana zostaje zm
 W ten sposób obiekt tworzy przestrzeń nazw dla tejże biblioteki. Chcąc skorzystać funkcjonalności biblioteki odwołujemy się
 do właściwości utworzonego obiektu.
 
-#####Zarządzanie modułami
+##### Zarządzanie modułami
 
 Kolejnym sposobem na zapobieganie kolizji jest wykorzystanie bardziej nowoczesnej praktyki - podejścia modułowego.
 Jest to możliwe dzięki menadżerom zależności, które zapobiegają tworzeniu identyfikatorów w zakresie globalnym przez biblioteki.
 Menadżer zależności wymaga utworzenia identyfikatora dla całej biblioteki, której zawartość jest załadowana do nowo utworzonego
 zakresu. 
 
-####Funkcje jako zakresy
+#### Funkcje jako zakresy
 
 Aby nie zanieczyszczać globalnej przestrzeni nazw identyfikatorem funkcji, której ciała chcemy użyć tylko raz możemy
 skorzystać z następującego mechanizmu:
@@ -125,7 +125,7 @@ Wystarczy spojrzeć na położenie słowa kluczowego `function`. Jeżeli znajduj
 mamy do czynienia z deklaracją, w każdym innym przypadku (np. przypisanie funkcji do zmiennej, otoczenie nawiasami) mówi
 się o wyrażeniu funkcyjnym.
 
-#####Anonimowość kontra nazwa
+##### Anonimowość kontra nazwa
 
 Gdy wyrażenie funkcyjne nie posiada identyfikatora w formie nazwy mówimy o **anonimowym wyrażeniu funkcyjnym**
 (ang. anonymous function expression). Deklaracja funkcji wymaga identyfikatora, podczas gdy wyrażenie funkcyjne zostawia nam wolną rękę.
@@ -144,7 +144,7 @@ nie narażając się na żadne mankamenty.
 
 **Dobra praktyka:** zawsze nazywaj swoje wyrażenia funkcyjne.
 
-#####Natychmiastowe wywoływanie wyrażeń funkcyjnych
+##### Natychmiastowe wywoływanie wyrażeń funkcyjnych
 
 ```
 var a = 2;
@@ -195,7 +195,7 @@ var a = 2;
     console.log(glob.a);
 });
 ```
-####Bloki jako zakresy
+#### Bloki jako zakresy
 
 ```
 for (var i = 0; i < 10; i++) {
@@ -220,11 +220,11 @@ W związku z tym powyższy przykład tylko udaje istnienie zakresu blokowego.
 Korzystając z zakresu blokowego możemy rozszerzyć zastosowanie zasady najmniejszego uprzywilejowania. Aby wykorzystać 
 zakres blokowy w JS musimy skorzystać z kilku okrężnych praktyk, z uwagi na brak jawnej implementacji tego mechanizmu.
 
-#####with
+##### with
 
 Metoda omówiona w rozdziale drugim, jest ona wycofana i nie powinno się z niej korzystać aczkolwiek tworzy ona zakres blokowy.
 
-#####try/catch
+##### try/catch
 
 Wraz z ES3 wprowadzono zakres blokowy dla deklaracji w klauzuli catch.
 ```markdown
@@ -237,7 +237,7 @@ catch(err) {
 console.log(err); // ReferenceError: 'err' not found
 ```
 
-#####let
+##### let
 
 Póki co udało się zaprezentować jedynie niszowe rozwiązania. Przez długi czas JS miał tylko tyle do zaoferowania w temacie
 zakresów blokowych. Na szczęście ES6 wprowadziło nowe słowo kluczowe `let`, będące alternatywą dla `var` przy 
@@ -274,7 +274,7 @@ console.log(bar); //ReferenceError
   let bar = 2;
 }
 ```
-#####Zbieranie nieużytków
+##### Zbieranie nieużytków
 
 Zakres blokowy znajduje zastosowanie w domknięciach i zbieraniu nieużytków w celu odzyskania pamięci. Dokładne informacje
 nt. domknięć umieszczę w rozdziale piątym.
@@ -304,13 +304,13 @@ Korzystając z jawnego bloku możemy dać językowi do zrozumienia, że zmienna 
 }
 ...
 ```
-#####pętle let
+##### pętle let
 
 Jednym z najlepszych zastosowań słowa kluczowego `let` są pętle. W ten sposób nasza zmienna `i` zostaje przypisana do
 pętli for, a jej wartość ulega nadpisaniu przy każdej iteracji. Co czyni to przypisywanie przy każdej iteracji ciekawym
 procesem? O tym w rozdziale piątym poruszającym tematykę domknięć.
 
-#####const
+##### const
 
 W dodatku do `let`, ES6 wprowadziło słowo kluczowe `const`, która również służy do tworzenia zmiennych blokowych. Różnica
 tyczy się jej wartość, która jest stała i próba jej zmiany skutkuje wyrzuceniem błędu.

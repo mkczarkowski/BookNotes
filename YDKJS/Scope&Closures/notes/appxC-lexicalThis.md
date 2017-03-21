@@ -1,4 +1,4 @@
-##**Załącznik C - Lekykalne this**
+## **Załącznik C - Lekykalne this**
 
 Nazwa może być myląca, ponieważ ten załącznik nie dotyczy mechanizmu działania `this`, aczkolwiek opisuje jedno istotne
 zagadnienie, które łączy się z tematyką zakresu leksykalnego.

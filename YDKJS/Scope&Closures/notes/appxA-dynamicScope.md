@@ -1,4 +1,4 @@
-##**Załącznik A - Zakres dynamiczny**
+## **Załącznik A - Zakres dynamiczny**
 
 W rozdziale drugim poruszyliśmy zagadnienie alternatywy dla zakresu leksykalnego jaką jest zakres dynamiczny.
 

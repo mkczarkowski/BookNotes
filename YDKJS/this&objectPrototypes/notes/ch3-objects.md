@@ -1,6 +1,6 @@
-##**Rozdział III - Obiekty**
+## **Rozdział III - Obiekty**
 
-####Składnia
+#### Składnia
 
 Obiekt można utworzyć za pomocą deklaracji lub konstruktora.
 
@@ -18,7 +18,7 @@ myObj.key = value;
 Obydwie formy prowadzą do tego samego rezultatu. Druga zmusza nas do pojedynczego dodawania właściwości przez co 
 nie występuje w praktyce.
 
-####Typ
+#### Typ
 
 Istnieje sześć podstawowych typów wbudowanych w JS:
 
@@ -39,7 +39,7 @@ Jednak istnieje kilka podtypów obiektów, któe możemy nazywać złożonymi pr
 (wywoływalny obiekt). Funkcje są w JS obiektami 'pierwszej klasy', co oznacza, że są traktowane jak zwykłe obiekty. Kolejnym
 podtypem obiektu są tablice.
 
-#####Obiekty wbudowane
+##### Obiekty wbudowane
 
 W skład listy obiektów wbudowanych wchodzi kilka pozycji, których nazwy wskazują na bezpośredni związek z typami prymitywnymi,
 jednak ta relacja jest dużo bardziej skomplikowana.
@@ -84,7 +84,7 @@ mechanika znajduje zastosowanie w przypadku `Number`, `Boolean` i ich prymitywny
 `null` oraz `undefined` nie posiadają opakowujących obiektów, istnieją jedynie jako wartości prymitywne. Za to `Date` może zostać
 stworzone jedynie za pomocą konstruktora i nie posiada prymitywnego odpowiednika.
 
-####Zawartość
+#### Zawartość
 
 Jak wszyscy wiedzą obiekt składa się z wartości przechowywanych w specjalnych lokalizacjach nazywanych właściwościami.
 Oczywiście to tylko abstrakcyjna konstrukcja, to gdzie przechowywane są same wartości zależy od implementacji silnika - 
@@ -138,7 +138,7 @@ myObject["true"]; // "foo"
 myObject["3]; // "bar"
 myObject["[object Object]"]; // baz
 ```
-#####Wyliczone nazwy właściwości
+##### Wyliczone nazwy właściwości
 
 Notacja dostępu z użyciem `[..]` jest użyteczna, gdy chcemy skorzystać z wartości wyrażenia wyliczonego podczas wykonywania
 kodu. W ES6 umożliwiono wykonywanie działań na stringach podczas dosłownej formy deklarowania obiektu.
@@ -165,7 +165,7 @@ console.log(obj[MY_KEY]); // 123
 console.log(obj["MY_KEY"]); // undefined
 ```
 
-#####Właściwość vs. metoda
+##### Właściwość vs. metoda
 
 W wielu językach programowania zachodzi podział nazewnictwa właściwości ze względu na jej wartość. Jeżeli jest nią funkcja
 to mówimy o metodzie. Stąd mówi się o dostępie do metody i dostępie do właściwości. Specyfikacja JS również wyróżnia takie nazewnictwo.
@@ -216,7 +216,7 @@ someFoo; // function foo() {..}
 myObject.foo // function foo() {..}
 ```
 
-#####Tablice
+##### Tablice
 
 Tablice korzystają z notacji `[]`. Posiadają one bardziej rozbudowaną strukturę organizacyjną związaną z przechowywaniem
 danych (pozostawiając swobodę co do przechowywanych wartości). Tablice działają w oparciu o numeracyjne indeksowanie lokalizacji, 
@@ -245,7 +245,7 @@ Warto wiedzieć, że dodanie właściwości nie skutkuje zmianą wartości zwrac
 Tablice są zoptymalizowane do działania w oparciu o indeksy, podobnie jak obiekty w oparciu o pary klucz/wartość - nie warto
 stosować ich zamiennie.
 
-#####Duplikowanie obiektów
+##### Duplikowanie obiektów
 
 Nowi developerzy często proszą o wprowadzenie feature'a pozwalającego na kopiowanie obiektu.
 ```markdown
@@ -292,7 +292,7 @@ Jako, że niejawnie korzystamy z operatora przypisania `=`, więc specjalne cech
 (takie jak `writable`) z obiektu źródłowego nie zostają zachowane w nowym obiekcie. Funkcjonalność zachowania tych cech
 posiada metoda `Object.defineProperty(..)`.
 
-#####Deskryptor właściwości
+##### Deskryptor właściwości
 
 Przed ES5 język JS nie zapewniał żadnych możliwości inspekcji cech właściwości, takich jak np. read-only.
 
@@ -394,7 +394,7 @@ pamięci jak w C/C++.
 
 Ta cecha decyduje o tym czy właściwość będzie widoczna podczas enumeracji takich jak np. pętla `for..in`.
 
-#####Niezmienność (ang. _immutability_)
+##### Niezmienność (ang. _immutability_)
 
 Czasami zależy nam na stworzeniu właściwości/obiektów, które nie mogą ulec późniejszym zmianom. ES5 daje nam kilka takich
 możliwości, jednak wszystkie z nich zapewniają płytką niezmienność. Znaczy to tyle, że niezmienność będzie dotyczyła
@@ -440,7 +440,7 @@ ustawia deskryptor `configurable` wszystkich jego właściwości na `false`.
 `Object.freeze(..)` tworzy zamrożony obiekt, czyli wywołuje na nim `Object.seal(..)` i ponadto ustawia deskryptor `writable`
 na `false`. To rozwiązanie zapewnia najwyższy stopień niezmienności jaki możemy uzyskać dla obiektu. 
 
-#####**`[[Get]]`**
+##### **`[[Get]]`**
 
 Warto zastanowić się nad szczegółami procesu uzyskiwania dostępu do właściwości.
 ```markdown
@@ -469,7 +469,7 @@ Z punktu widzenia zwróconej wartości dwie powyższe operacje są identyczne - 
 większą ilość operacji w przypadku `myObject.b`, niż `myObject.a`. Skupiając się jedynie na zwróconej wartości nie jesteśmy
 w stanie odróżnić czy właściwość posiadała jawnie przypisaną wartość `undefined` czy nie została w ogóle odnaleziona w obiekcie.
 
-#####**`[[Put]]`**
+##### **`[[Put]]`**
 
 Mechanika `[[Put]]` jest zależna od wielu czynników, przede wszystkim od tego czy właściwość istnieje już w obiekcie.
 
@@ -483,7 +483,7 @@ wyrzuć `TypeError` w `strict mode`.
 Jeżeli właściwość nie istnieje w obiekcie, mechanika [[Put]] staje się bardziej skomplikowana i zostanie opisana w rozdziale
 5 dotyczącym prototypów.
 
-#####Gettery i Settery
+##### Gettery i Settery
 
 ES5 wprowadziło częściową możliwość nadpisywania domyślnych operacji `[[Get]]` i `[[Put]]` na poziomie samych właściwości, a 
 nie całego obiektu. Służą do tego gettery i settery. Getter to właściwość, która niejawnie wywołuje funkcję zwracającą wartość.
@@ -549,7 +549,7 @@ myObject.a; // 4
 W tym przykładzie podana wartość 2 jest przechowywana w innej zmiennej, `_a_`. Takie nazewnictwo to zwykła konwencja, nie implikuje
 żadnej specjalnej mechaniki.
 
-#####Egzystencja
+##### Egzystencja
 
 Udowodniliśmy wcześniej, że dostęp do właściwości jak np. `myObject.a` może skutkować zwróceniem `undefined` zarówno w przypadku
 jawnego ustawienia tej wartości, jak i gdy `a` nigdy nie zostało zdefiniowane. Aby sprawdzić, który ze scenariuszy zaistniał
@@ -640,7 +640,7 @@ tablicę wszystkich właściwości, policzalnych lub nie.
 Póki co nie istnieje sposób na zdobycie wszystkich właściwości o mechanice analogicznej do operatora `in` (czyli włącznie
 z przeszukaniem wyższych poziomów łańcucha `[[Prototype]]`).
 
-####Iterowanie
+#### Iterowanie
 
 Pętla for..in iteruje po liście nazw policzalnych właściwości (włącznie z łańcuchem `[[Prototype]]`). Co zrobić, gdy chcemy
 iterować po wartościach?
@@ -773,7 +773,7 @@ for (var n of randoms) {
 }
 ```
 
-####Podsumowanie
+#### Podsumowanie
 
 Obiekty w JS mogą przyjmować formę dosłowną taką jak `var a = { .. }` oraz wartość konstruowaną taką jak `var a = new Array(..)`.
 

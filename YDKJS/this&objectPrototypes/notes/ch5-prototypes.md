@@ -1,6 +1,6 @@
-##Rozdział V - **Prototypy**
+## Rozdział V - **Prototypy**
 
-####`[[Prototype]]`
+#### `[[Prototype]]`
 
 Obiekty w JS posiadają wewnętrzną właściwość nazwaną w specyfikacji `[[Prototype]]`, którajest po prostu referencją do innego obiektu. 
 Praktycznie każdy obiekt otrzymuje non-`null`ową wartość dla tej właściwości w momencie utworzenia.
@@ -37,7 +37,7 @@ w celu odszukania właściwości.
 Ten proces trwa dopóki dopóki nazwa właściwości zostanie odnaleziona lub łańcuch `[[Prototype]]` zakończy się. Jeżeli właściwość
 nie zostanie odnaleziona rezultatem `[[Get]]` będzie `undefined`.
 
-#####`Object.prototype`
+##### `Object.prototype`
 
 Gdzie tak właściwie kończy się łańcuch `[[Prototype]]`?
 
@@ -48,7 +48,7 @@ Do wyżej wymienionych funkcjonalności należą między innymi `.toString()` lu
 inne takie jak: `.hasOwnProperty()`. Inną funkcją pochodzacą z `Object.prototype`, która może być Wam nieznana jest 
 `isPrototypeOf(..)`. Zostanie opisana w dalszej części notatek.
 
-#####Ustawianie i zaciemnianie właściwości
+##### Ustawianie i zaciemnianie właściwości
 
 W rozdziale 3 wspomnieliśmy o tym, że ustawianie właściwości obiektu jest bardziej skomplikowane, niż samo jej dodanie
 lub zmiana wartości istniejącej właściwości.  

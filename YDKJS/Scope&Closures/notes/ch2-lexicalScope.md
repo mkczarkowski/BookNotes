@@ -1,9 +1,9 @@
-##Rozdział 2 - Zakres leksykalny
+## Rozdział 2 - Zakres leksykalny
 
 Istnieją dwa najczęściej implementowane modele działania zakresów. Pierwszy, zdecydowanie najpopularniejszy, nazywany jest
 **zakresem leksykalnym**. Drugi model, używany przez Basha i Perl, nazywany jest zakresem dynamicznym.
 
-####Leksykalizacja
+#### Leksykalizacja
 
 Jak pisałem w notatkach do pierwszego rozdziału, leksykalizacja to proces analizowania ciągu kodu źródłowego i 
 nadawania tokenom semantycznego znaczenia.
@@ -28,7 +28,7 @@ Zakres funkcji bar zawiera jeden identyfikator: `c`.
 Każda funkcja tworzy własny zakres zagnieżdżany w funkcji zewnętrznej. Zakres funkcji bar jest zagnieżdżony
  w zakresie funkcji foo itd. 
 
-####Wyszukiwanie
+#### Wyszukiwanie
 
 Struktura i relatywne umiejscowienie zakresów tłumaczy mechanizm wyszukiwania identyfikatorów przez silnik. 
 Silnik rozpoczyna poszukiwania od aktualnego zakresu, w przypadku braku efektów przechodzi o poziom wyżej, do zakresu zewnętrznego. 
@@ -45,13 +45,13 @@ Zakres leksykalny dotyczy tylko identyfikatorów pierwszej klasy. W przypadku re
 wyszukiwanie zakresu leksykalnego ograniczyłoby się do odnalezienia identyfikatora foo. Kolejne działania byłyby zależne
 od zasad dostępu do właściwości obiektu.
 
-####Oszukiwanie leksykalizacji
+#### Oszukiwanie leksykalizacji
 
 Istnieją dwa sposoby oszukiwania zakresu leksylanego w JS. Posiadają one niepożądane skutki uboczne 
 (przede wszystkim spadek wydajności) przez co nie należy ich
 używać ale warto znać ich działanie.
 
-#####eval
+##### eval
 
 Silnik pobiera stringa będącego argumentem tej metody i traktuje go jako fragment kodu w danej linijce programu. 
 W ten sposób można generować kod podczas wykonywania programu i uruchomić go jakby znajdował się w nim od samego początku. 
@@ -79,7 +79,7 @@ wygenerowaną funkcję.
 
 Dynamicznie wygenerowany kod zawsze skutkuje spadkiem wydajności praktycznie nigdy nie wynagradzając tego w należyty sposób.
 
-#####with
+##### with
 
 Druga metoda, wycofana w ES6. Pozwala ona na szybsze zapisywanie referencji do właściwości obiektu ze względu na brak
 konieczności powtarzania referencji do samego obiektu.
@@ -127,7 +127,7 @@ console.log(a); // 2 - wyciek do zmiennej globalnej!
 ponieważ silnik wykonał nieudane wyszukiwanie LHS w zakresach wewnętrznych (`obj` i `foo`) oraz zakresie globalnym. 
 Do takiej sytuacji dojdzie oczywiście tylko w non-strict mode.
 
-#####Wpływ na wydajność
+##### Wpływ na wydajność
 
 Jeżeli silnik natrafi na `eval()` lub `with()` podczas kompilacji kodu wychodzi z słusznego założenia, 
 że cała jego wiedza na temat identyfikatorów może być niezgodna ze stanem podczas wykonywania kodu. 

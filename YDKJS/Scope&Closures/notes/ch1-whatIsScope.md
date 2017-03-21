@@ -1,11 +1,11 @@
-##**Rozdział I - Czym jest zakres?**
+## **Rozdział I - Czym jest zakres?**
 
 Przechowywanie wartości i pobieranie ich ze zmiennych nadaje
 programowi **stan** (eng. _state_).
 
 **Zakres** (ang. _scope_) - zbiór zasad dotyczących przechowywania i wyszukiwania zmiennych.
 
-####**Kompilator - teoria**
+#### **Kompilator - teoria**
 
 Javascript, mimo powszechnej opinii, jest językiem **kompilowanym**, a nie dynamicznym/interpretowanym.  
 
@@ -70,7 +70,7 @@ var c = foo(2);
 LHS: `var c`, `a = 2`, `var b`.  
 RHS: `...foo(2)`, `... = a`, `a...`, `...b`.
 
-####**Zagnieżdżony zakres**
+#### **Zagnieżdżony zakres**
 
 Zakresy są zagnieżdżane wewnątrz siebie na tej samej zasadzie co bloki czy funkcje. Jeżeli zmienna nie może zostać
 odnaleziona w aktualnym zakresie silnik sprawdza najbliższy zewnętrzny zakres kontynuując, aż do zakresu globalnego.
@@ -87,7 +87,7 @@ foo( 2 ); // 4
 Referencja RHS nie może zostać wykonana wewnątrz zakresu funkcji foo, 
 ale jest to możliwe w zakresie zewnętrznym (globalnym).
 
-####**Błędy**
+#### **Błędy**
 
 Wyszukiwanie LHS oraz RHS reagują inaczej na brak wcześniejszego zadeklarowania zmiennej (non-strict mode).
 

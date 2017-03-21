@@ -1,4 +1,4 @@
-##**Rozdział I - `this` or That?**
+## **Rozdział I - `this` or That?**
 
 Słowo kluczowe this należy do najbardziej niezrozumiałych mechanizmów w całym JavaScript.
 Jest to specjalny identyfikator, który jest automatycznie zdefiniowany w zakresie każdej funkcji - na co wskazuje, 
@@ -49,12 +49,12 @@ pozwalając na stworzenie czystszego kodu.
 
 Im bardziej rozbudowana i skomplikowana jest aplikacja, tym trudniej przekazywać kontekst jako jawny parametr.
 
-####Zamieszanie
+#### Zamieszanie
 
 Zanim rozpracujemy jak `this` działa musimy się zastanowić nad tym jak NIE działa. 
 Na ogół z tym wiąże się większość kłopotów z opanowaniem tego mechanizmu.
 
-#####Samo w sobie(ang. _itself_)
+##### Samo w sobie(ang. _itself_)
 
 Pierwszym błędnym założeniem jest myślenie, że `this` odwołuje się do funkcji samej w sobie. 
 Na to przynajmniej wskazuje gramatyka tego wyrażenia. 
@@ -185,7 +185,7 @@ console.log(foo.count); // 4
 Tym razem udało nam się wykorzystać this, zamiast go unikać. W dalszej części książki umówione zostaną wykorzystywane techniki,
 więc nie ma się czego bać. 
 
-#####To zakres
+##### To zakres
 
 Kolejnym mylnym przekonaniem jest przeświadczenie, że `this` odwołuje się do zakresu funkcji.
 Mamy tu do czynienia z ciężkim orzechem do zgryzienia, ponieważ jest w tym trochę prawdy.
@@ -218,7 +218,7 @@ Za każdym razem gdy przyjdzie nam na myśl próba połączenia wyszukiwania w r
 należy pamiętać: takie połączenie nie istnieje.
 
 
-####Czym jest `this`?
+#### Czym jest `this`?
 
 Mając za sobą wszystkie nieprawidłowe koncepcje dotyczące funkcjonowania `this`, zastanówmy się nad właściwym działaniem
 tego mechanizmu. 

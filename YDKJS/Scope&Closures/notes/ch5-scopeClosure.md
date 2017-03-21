@@ -1,9 +1,9 @@
-##Rozdział V - Zakres domknięcia
+## Rozdział V - Zakres domknięcia
 
 Domknięcia są czymś naprawdę powszechnym w JS, należy jedynie nauczyć się je rozpoznawać i wykorzystywać. Są one
 naturalnym następstwem pisania kodu w oparciu o zakres leksykalny. 
 
-####Sedno sprawy
+#### Sedno sprawy
 
 Formalna definicja domknięcia: Z domknięciem mamy do czynienia, gdy funkcja ma możliwość zapamiętania i 
 dostęp do zakresu leksykalnego, nawet kiedy jest ona wywoływana poza swoim zakresem leksykalnym.
@@ -85,7 +85,7 @@ bar(); // 2
 Za każdym razem gdy przenosimy funkcje wewnętrzną poza zakres leksykalny zachowa ona referencję do zakresu, w którym
 została pierwotnie zadeklarowana. Przy wywołaniu takiej funkcji możemy korzystać z domkniętych zakresów.
 
-####Zastosowanie prakyczne
+#### Zastosowanie prakyczne
 
 Poprzednie przykłady mają akademicki charakter i są skonstruowane do zilustrowania mechaniki domknięcia. W tym paragrafie
 skupimy się na udowodnieniu jak powszechne domknięcia są w kodzie pisanym na co dzień.
@@ -125,7 +125,7 @@ nie można się z tym zgodzić ponieważ tego typu funkcje nie są wykonywane po
 uzyskiwana za pomocą normalnego procesu wyszukiwania, a nie dzięki domknięciu. Jednak IIFE tworzą własne zakresy, które mogą
 być (i bardzo często są) wykorzystywane w domknięciach.
 
-####Pętle i domknięcie
+#### Pętle i domknięcie
 
 Jednym z najpopularniejszych (wręcz kanonicznych) przykładów używanych do zaprezentowania
 domknięć jest stara dobra pętla `for`. 
@@ -186,7 +186,7 @@ for (var i = 1; i <= 5; i++) {
 ```
 Z wykorzystaniem IIFE mogliśmy stworzyć zakres dla każdej iteracji, w którym mieliśmy dostęp do aktualnego stanu `i`.
 
-####Wracając do zakresów blokowych
+#### Wracając do zakresów blokowych
 
 W rozdziale trzecim poznaliśmy deklarację zmiennej przy pomocy `let`, która tworzy zakres dla bloku. Jest to idealne rozwiązanie
 dla problemu domykania każdej z iteracji pętli z poprzedniego paragrafu.
@@ -209,7 +209,7 @@ for (let i = 1; i <= 5; i++) {
 }
 ```
 
-####Moduły
+#### Moduły
 
 Są inne wzorce, które wykorzystują możliwości domknięć lecz na pierwszy rzut oka wcale nie są zwiazane z callbackami.
 Przyjrzyjmy się napotężniejszemu z nich: moduł.
@@ -320,7 +320,7 @@ foo.identify() // "FOO MODULE"
 Utrzymując referencję do obiektu publicAPI możemy modyfikować instancję naszego modułu od wewnątrz, włączając dodawanie i odejmowanie
 metod oraz właściwości wraz z zmianą ich wartości.
 
-#####Moduły obecnie
+##### Moduły obecnie
 
 Różnorakie menadżery zarządzania zależnościami opakowują przedstawiony w poprzednim paragrafie wzorzec modułowy 
 w przyjazne API.
@@ -386,7 +386,7 @@ Powyższy przykład ma na celu zobrazowanie, że zarządzaniem modułami odbywa 
 w pełni przekonany czytając powyższy kod). Widzimy zastosowanie dwóch głównych cech charakterystycznych wzorca modułowego:
 wywoływanie funkcji opakowującej oraz zwracanie wartości w formie API dla modułu. 
 
-#####Przyszłość modułów
+##### Przyszłość modułów
 
 ES6 dodaje składnię pierwszej klasy dla modułów. Kiedy korzystamy z systemu ładowania modułów ES6 traktuje plik jako
 oddzielny moduł. Każdy moduł może importować inne moduły lub konkretne części API oraz eksportować te, które są publiczne.

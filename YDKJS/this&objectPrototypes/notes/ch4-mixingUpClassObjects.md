@@ -1,11 +1,11 @@
-##**Rozdział IV - Mieszanie obiektów "klas"**
+## **Rozdział IV - Mieszanie obiektów "klas"**
 
 W tym rozdziale skupimy się na programowaniu obiektowym. Przyjrzymy się wzorcowi projektowemu zorientowanemu na klasy.
 Wyjaśnimy znaczenie podstawowych pojęć takich jak: klasy, instancje, dziedziczenie i relatywny polimorfizm.
 
 Zastanowimy się dlaczego te koncepcje nie są dopasowane do mechaniki obiektów w JS.
 
-####Teoria klas
+#### Teoria klas
 
 "Klasa/dziedziczenie" opisuje pewien sposób na organizacje i architekturę kodu - jedno z rozwiązań przenoszenia problemów
 z rzeczywistości do abstrakcyjnych programów komputerowych.
@@ -32,14 +32,14 @@ Kolejnym kluczowym pojęciem jest "polimorfizm", który tyczy się możliwości 
 w celu nadania im większego stopnia szczegółowości. Polimorfizm relatywny daje nam możliwość odwoływania się do nadpisywanego
 mechanizmu z poziomu mechanizmu nadpisującego.
 
-#####"Klasowy" wzorzecz projektowy
+##### "Klasowy" wzorzecz projektowy
 
 Czasami można zapomnieć, że programowanie obiektowe jest zaledwie wzorcem projektowym, a nie nisko-poziomową mechaniką, 
 od której zależne są wszystkie wysoko-poziomowe implementacje. Innymi wzorce to: programowanie proceduralne, programowanie
 funkcyjne. W przypadku języka Java nie mamy wyboru, wszystko jest klasą. Inne języki takie jak C/C++ czy PHP dają nam składniową
 możliwość programowania proceduralnego oraz zorientowanego na klasy. 
 
-#####Klasy w JS
+##### Klasy w JS
 
 Mamy w JS do czynienia z kilkoma elementami składni, które wskazują na istnienie mechanizmów klasowych (`new`, `instanceof`, `class`).
 Czy są one wystarczające, aby mówić o istnieniu klas w JS? Zdecydowanie nie.
@@ -47,7 +47,7 @@ Czy są one wystarczające, aby mówić o istnieniu klas w JS? Zdecydowanie nie.
 JS daje możliwość, z dość dużą dawką wysiłku, zaimplementowanie wzorca klasowego w oparciu o dostępną składnię. Jednakże
 sama mechanika języka skutecznie walczy przeciwko takiemu rozwiązaniu. 
 
-####Mechanika klas
+#### Mechanika klas
 
 W wielu zorientowanych na klasy językach, standardowa biblioteka zapewnia strukturę danych "stosu" (push, pop, itd.) jako
 klasę `Stos`. Taka klasa posiadałaby wewnętrzy zbiór pól i dostępnych zachowań (metod) do prowadzenia interakcji z danymi.
@@ -55,7 +55,7 @@ klasę `Stos`. Taka klasa posiadałaby wewnętrzy zbiór pól i dostępnych zach
 W takim scenariuszu nie operuje się na klasie `Stos`, która jest abstrakcyjnym wytłumaczeniem tego co rozumiemy przez "stos".
 Aby wykonać działania na konkretnej strukturze danych musimy stworzyć instancję klasy. 
 
-#####Budowanie
+##### Budowanie
 
 Tradycyjna metafora tłumacząca różnice pomiędzy klasą i instancją pochodzi z konstrukcji budynków.
 
@@ -82,7 +82,7 @@ Ten obiekt jest kopią wszystkich cech opisanych przez klasę.
 Wchodząc do budynku rzadko mamy do czynienia z widokiem wywieszonego na ścianie planu, stąd rzadko używamy obiektu do
 modyfikowania klasy ani nie udostępniamy za jego pośrednictwem tak poufnych danych publicznie. 
 
-#####Konstruktor
+##### Konstruktor
 
 Instancja klasy jest konstruowana przez specjalną metodę klasy, zwykle noszącą tę samą nazwę co klasa, zwaną "konstruktorem".
 Jawnym zadaniem tej metody jest inicjalizacja stanu, który będzie wymagała każda z instancji.
@@ -113,7 +113,7 @@ przedstawiciela klasy `CoolGuy`.
 
 Konstruktor jest zawsze wywoływany wraz z operatorem `new`, w ten sposób język rozpoznaje, że chcemy stworzyć instancję klasy.
 
-####Dziedziczenie klas
+#### Dziedziczenie klas
 
 W językach zorientowanych na klasy możemy stworzyć nową klasę, która dziedziczy po klasie, która powstała wcześniej. Mówi się, 
 że klasa dziedzicząca jest 'dzieckiem', a ta po której się dziedziczy 'rodzicem'.
@@ -164,7 +164,7 @@ W oparciu o naszego rodzica tworzymy dwa typy pojazdów: `Car` oraz `SpeedBoat`.
 cechy `Vehicle` jednocześnie rozszerzając je o specjalistyczne właściwości. Samochód potrzebuje czterech kół, a motorówka
 dwóch silników. 
 
-#####Polimorfizm
+##### Polimorfizm
 
 `Car` definiuje własną metodę `drive()`, która nadpisuje metodę odziedziczoną od `Vehicle`. Jednakże metoda `drive()` klasy
 `Car` wywołuje `inherited: drive()`, co wskazuje na to, że `Car` odwołuje się do nadpisanej metody `drive()`. Ta sama
@@ -193,7 +193,7 @@ poziomu drugiego (w załączniku A zostaje zaprezentowane jak radzi sobie z tym 
 
 Warto zauważyć, że to klasa dziedzicząca, a nie jej instancja może się odwoływać (zwykle za pomocą `super`) do rodzica/przodka.
 
-#####Dziedziczenie wielokrotne
+##### Dziedziczenie wielokrotne
 
 Niektóre języki zorienowane klasowo pozwalają na podanie więcej, niż jednego rodzica, po którym będziemy dziedziczyć. 
 W związku z tym dziedziczenie wielokrotne zakłada, że definicja kilku rodziców zostanie przekopiowana do klasy dziedziczącej.
@@ -208,7 +208,7 @@ nadpisuje tę metodę za pomocą polimorfizmu. Którą implementacje ma odziedzi
 
 JavaScript nie posiada wbudowanego mechanizmu dziedziczenia wielokrotnego, aby uniknąć tego typu komplikacji. 
 
-####Miksowanie
+#### Miksowanie
 
 Mechanizm obiektowy w JS nie wykonuje automatycznego kopiowania zachowań podczas dziedziczenia czy instancjonowania. 
 W JS najzwyczajniej nie ma czegoś takiego jak "klasa" do zainicjowania, mamy tylko obiekty, które nie są do siebie kopiowane
@@ -216,7 +216,7 @@ lecz są ze sobą łączone.
 
 Jako, że nie mamy do czynienia z wbudowanym kopiowaniem przeanalizujemy jak developerzy miksują ten proces w jawny i niejawny sposób.
 
-#####Jawne miksowanie
+##### Jawne miksowanie
 
 Wrócimy do przykładu `Vehicle` oraz `Car`. Stworzymy funkcjonalność, która manualnie skopiuje dziedziczone zachowanie.
 W większości bibliotek ten mechanizm nazywa się `extend(..)`, w tym przykładzie posłużymy się `mixin(..)`.
@@ -260,7 +260,7 @@ var Car = mixin(Vehicle, {
 zduplikowane, a jedynie utworzono do nich referencje. `Car` posiada właściwość `ignition` jest skopiowaną referencją
 do funkcji `ignition()`. `Car` posiadał właściwość `drive`, więc nie doszło do nadpisania tej referencji. 
 
-#####Wracając do "polimorfizmu"
+##### Wracając do "polimorfizmu"
 
 Przeanalizujmy to wyrażenie: `Vehicle.drive.call.(this)`. Możemy to nazwać "jawnym pseudo-polimorfizmem". Wracając do wcześniejszego
 przykładu, korzystaliśmy z `inherited: drive()` nazywanego "polimorfizmem relatywnym".
@@ -383,7 +383,7 @@ zwróciliśmy efekt tego połączenia jako obiekt `car`.
 zwracamy utworzony obiekt `car`, więc dochodzi do jego natychmiastowego usunięcia. Możemy zrezygnować z `new` zachowując funkcjonalność,
 jednocześnie oszczedzając zasoby niepotrzebnie używane podczas tworzenia i usuwania obiektu.
 
-#####Niejawne miksowanie
+##### Niejawne miksowanie
 
 Niejawne miksowanie jest ściśle związane z "jawnym pseudo-polimorfizmem", stąd posiada te same wady.
 ```markdown
@@ -415,7 +415,7 @@ do obiektu `Another`, a nie do obiektu `Something`.
 
 Niestety to rozwiązanie wymaga od nas bezwzględnego wskazywania rodzica, więc nie posiada zalet polimorfizmu relatywnego.
 
-####Podsumowanie
+#### Podsumowanie
 
 Klasy to wzorzecz projektowy. Wiele języków zapewnia składnię, która jest naturalnie zorientowana na klasy. JS posiada taki syntax,
 ale zachowuje się kompletnie inaczej.

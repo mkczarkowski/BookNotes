@@ -1,6 +1,6 @@
-##**Rozdział IV - Wynoszenie (ang. _hoisting_)**
+## **Rozdział IV - Wynoszenie (ang. _hoisting_)**
 
-####Kura czy jajko?
+#### Kura czy jajko?
 
 Istnieje uzasadniona pokusa, aby analizując kod postrzegać go jako zbiór instrukcji wykonywanych od góry do dołu. Byłoby to
 słuszne założenie gdyby nie jeden istotny aspekt - wynoszenie.
@@ -25,7 +25,7 @@ jest `undefined`.
 Powyższe przykłady udowadniają, że mamy tutaj do czynienia z paradoksem. Kto ma pierwszeństwo? Deklaracja ("jajko") czy
 przypisanie ("kura").
 
-####Powrót kompilatora
+#### Powrót kompilatora
 
 Temat kompilatora był szeroko omówiony w rozdziale pierwszym, teraz wrócimy do tej tematyki omawiając wynoszenie.
 Jak pamiętamy silnik wykonuje kompilację kodu przed jego interpretacją. Częścią procesu kompilacji jest przypisanie wszystkich
@@ -105,7 +105,7 @@ foo = function() {
   // ...
 ```
 
-####Funkcje mają pierwszeństwo
+#### Funkcje mają pierwszeństwo
 
 Zarówno deklaracje funkcji jak i zmiennych ulegają wynoszeniu. Trzeba jednak pamiętać o subtelnym detalu: funkcje są wynoszone
 jako pierwsze, a dopiero po nich zmienne.
