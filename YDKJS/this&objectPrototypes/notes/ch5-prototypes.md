@@ -482,3 +482,51 @@ całym zamieszaniem związanym z `.prototype` i `.constructor`.
 żadnych delegacji. W takim wypadku nie działa operator `instanceof` (nie ma na co wskazać), zawsze zwróci `false`. Obiekty
 utworzone w ten sposób najczęściej spełniają zadanie słowników, kontenerów na dane pozbawione nieoczekiwanych efektów ubocznych
 spowodowanych delegacją właściwości/funkcji przez łańcuch `[[Prototype]]`.
+
+**Polyfill dla `Object.create()`**
+
+`Object.create(..)` zostało dodane w ES5. Jeżeli potrzebna byłaby obsługa tej metody w środowisko pre-ES5 moglibyśmy wykorzystać
+częściowy polyfill.
+```markdown
+if (!Object.create) {
+    Object.create = function(o) {
+      function F(){}
+        F.prototype = o;
+        return new F();
+    };
+}
+```
+W tym polyfillu korzystamy z odrzucanej funkcji `F`, której prototyp jest nadpisywany wybranym przez nas obiektem. 
+Następnie używamy `new F()`, aby stworzyć obiekt z pożądanym połączeniem.
+
+Teraz przyjrzymy się części `Object.create()`, której nie byliśmy w stanie polyfillować.
+```markdown
+var anotherObject = {
+  a: 2,
+}
+
+var myObject = Object.create(anotherObject, {
+  b: {
+    enumerable: false,
+    writable: true,
+    configurable: false,
+    value: 3,
+  },
+  c: {
+    enumerable: true,
+    writable: false,
+    configurable: false,
+    value 4,
+  }
+});
+
+myObject.hasOwnProperty("a"); // false
+myObject.hasOwnProperty("b"); // true
+myObject.hasOwnProperty("c"); // true
+
+myObject.a; // 2
+myObject.b; // 3
+myObject.c; // 4
+```
+Jako drugi argument metody `Object.create(..)` możemy przekazać nazwę właściwości wraz z jej deskryptorem. Deskryptory
+zostały wprowadzone w ES5, stąd nie mamy możliwości polyfillowania tej części metody.
