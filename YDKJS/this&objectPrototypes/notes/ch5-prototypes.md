@@ -530,3 +530,66 @@ myObject.c; // 4
 ```
 Jako drugi argument metody `Object.create(..)` możemy przekazać nazwę właściwości wraz z jej deskryptorem. Deskryptory
 zostały wprowadzone w ES5, stąd nie mamy możliwości polyfillowania tej części metody.
+
+##### Połączenia jako plan awaryjny?
+
+Mogłoby się wydawać, że głównym zadaniem `[[Prototype]]` jest stanowienie pewnego zabezpieczenia w przypadku "brakujących"
+właściwości.
+```markdown
+var anotherObject = {
+  cool: function() {
+    console.log("cool!");
+  }
+};
+
+var myObject = Object.create(anotherObject);
+
+myObject.cool(); // "cool!"
+```
+Ten kod zadziała dzięki `[[Prototype]]`, ale jeżeli kod napisanoby z myślą o tym, żeby `anotherObject` stanowił zabezpieczenie
+na wypadek, gdyby z jakiegoś nieznanego powodu `myObject` nie poradził sobie z jakąś metodą/własciwością to można śmiało 
+przypuszczać, że Twój kod zmierza w złym kierunku.
+
+Zdarzają się sytuacje, w której stosowanie `[[Prototype]]` jako zabezpieczenia ma sens, ale są to sytuacje rzadkie i specyficzne.
+
+**Warto wiedzieć**: W ES6 wprowadzono nową funkcjonalność `Proxy`, która obsługuje sytuację typu 'nie odnaleziono metody'.
+
+Aby uniknąć niezrozumiałego wykorzystania `[[Prototype]]` zaprezentowanego w powyższym przykładzie możemy pójśc w innym kierunku.
+```markdown
+var anotherObject = {
+  cool: function() {
+    console.log('cool!');
+  }
+};
+
+var myObject = Object.create(anotherObject);
+
+myObject.doCool = function() {
+  this.cool(); // wewnętrzna delegacja
+};
+
+myObject.doCool(); // 'cool!'
+```
+Tutaj wywołujemy metodę `.doCool()` faktycznie istniejącą wewnątrz `myObject`, tworząc nasze API bardziej zrozumiałym.
+Wewnętrznie nasza metoda wykorzystuje tę samą delegację co poprzedni przykład.
+
+#### Podsumowanie
+
+Kiedy dochodzi do próby uzyskania dostępu do właściwości, która nie istnieje wewnątrz obiektu wewnętrzne połączenie `[[Prototype]]`
+decyduje gdzie operacja `[[Get]]` powinna kontynuować poszukiwania. Kaskadowe połączenie pomiędzy obiektami definiuje 
+łańcuch prototypu (o działaniu podobnym do zagnieżdżonych zakresów), w którym poszukiwana będzie właściwość.
+
+Każdy normalny obiekt posiada wbudowany `Object.prototype` na szczycie swojego łańcucha prototypu (podobnie jak zakres
+globalny w wyszukiwaniu leksykalnym), tam zatrzyma się silnik w poszukiwaniu nieodnalezionej wcześniej właściwości. 
+Metody `.toString()`, `.valueOf()` oraz inne często używane funkcjonalności istnieją w obiekcie `Object.prototype`. W ten
+sposób mają do nich dostęp wszystkie obiekty w języku.
+
+Są dwa sposoby na połączenie ze sobą obiektów: pierwsze wymaga słowa kluczowego `new` wraz z wywołaniem funkcji, które 
+jako jeden z efektów ubocznych prowadzi do powstania nowego obiektu połączonego z innym obiektem.
+
+Tenże nowy obiekt jest obiektem wskazanym przez właściwość `.prototype` funkcji, która została wywołana. Funkcje wywoływane
+z użyciemm `new` są często nazywane 'konstruktorami', mimo że tak naprawdę nie inicjalizują klasy jak w tradycyjnych językach
+zorientowanych na klasy.
+
+W JS nie mamy do czynienia z prawdziwym dziedziczeniem ponieważ nie dochodzi do powstawania kopii. Obiekty są ze sobą łączone
+za pomocą łańcucha `[[Prototype]]`. Stąd stwierdzenie delegacja jest dużo bardziej odpowiednie, niż 'dziedziczenie'.
