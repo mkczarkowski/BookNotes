@@ -186,7 +186,7 @@ a1; // Gotcha {}
 ```
 Tym razem się udało, konsola Chrome faktycznie skorzystała z wartości `.constructor.name`. Takie zachowanie jest zgłoszone
 jako bug od momentu napisania YDKJS, nadal nie został on naprawiony. Cała ta mechanika ma jakiekolwiek zastosowanie tylko
-używając paradygmatu klasowego, więc nie powinno nas specjalnie obchodzić.
+używając paradygmatu klasowego, więc nie powinna nas specjalnie obchodzić.
 
 ##### Porównanie modeli mentalnych
 
@@ -249,10 +249,184 @@ w przypadku `b1`, `Bar.prototype` oraz `Foo.prototype`. Otrzymujemy trzy połąc
 Jednakże znacznie ułatwiliśmy całą resztę naszego kodu, skupiając się na samych połączeniach i unikając bałaganu związanego
 z naśladowaniem klas, konstruktorów, prototypów i `new`.
 
-![alt text](https://raw.githubusercontent.com/getify/You-Dont-Know-JS/master/this%20%26%20object%20prototypes/fig4.png "Diagram OO").
+![alt text](https://raw.githubusercontent.com/getify/You-Dont-Know-JS/master/this%20%26%20object%20prototypes/fig4.png "Diagram OO")
 
 Diagram ukazuje powyższy przykład ze wszystkimi technicznymi detalami. Dzięki niemu dowiedziałem się, że tylko `Function`
 i `Object` posiadają właściwość `.prototype`, podczas gdy stworzone na ich podstawie obiekty posiadają własciwość `__proto__`
 wskazujące na te prototypy, podczas gdy ich prototyp domyślnie jest `undefined`. Jeżeli stworzymy obiekt na podstawie funkcji,
 po czym zmienimy prototyp tej funkcji to `__proto__`, które jest właściwością dynamiczną będzie wskazywało na `Object`.
 
+Teraz przeanalizujmy kod dla OLOO:
+
+![alt text](https://raw.githubusercontent.com/getify/You-Dont-Know-JS/master/this%20%26%20object%20prototypes/fig6.png "Diagram OLOO")
+
+Jak widać, w przypadku OLOO mamy dużo mniej zależności na głowie. Wynika to z założenia, że w przypadku OLOO zależy nam
+jedynie na połączeniach pomiędzy obiektami.
+
+#### Klasy vs. obiekty
+
+Rozważymy typowy scenariusz: tworzenie widżetów UI (przyciski, drop-downy, etc.).
+
+##### Klasy widżetowe
+
+Myśląc w kategoriach OO od razu przychodzi nam do głowy klasa rodzic `Widget` i dziedzicząca po niej klasa `Button`.
+```aidl
+// Klasa rodzic
+function widget(width, height) {
+  this.width = width || 50;
+  this.height = height || 50;
+  this.$elem = null;
+}
+
+Widget.prototype.render = function($where) {
+  if (this.$elem) {
+    this.$elem.css({
+      width: this.width + 'px',
+      height: this.height + 'px',
+    }).appendTo($where);
+  }
+};
+// Klasa dziecko
+function Button(width, height, label) {
+  // "super" wywołanie konstruktora
+  Widget.call(this, width, height);
+  this.label = label || "Default";
+  this.$elem = $("<button>").text(this.label);
+}
+// `Button` "dziedziczy" z `Widget`
+Button.prototype = Object.create(Widget.prototype);
+//nadpisanie odziedziczonego
+Button.prototype.render = function($where) {
+  // wywołanie "super"
+  Widget.prototype.render.call(this, $where);
+  this.$elem.click(this.onClick.bind(this));
+};
+$(document).ready(function() {
+  var $body = $(document.body);
+  var btn1 = new Button(125, 30, "Hello");
+  var btn2 = new Button(150, 40, "World");
+  
+  btn1.render($body);
+  btn2.render($body);
+});
+```
+Wzorzec OO wymusza stworzenie podstawowej metody `render(..)` w klasie rodzica, po czym nadpisanie jej w klasie potomnej.
+Nie robimy tego w celu podmiany całego kodu ale wyspecjalizowania jego działania.
+
+**ES6 `class` sugar**
+
+Zaprezentujemy ten sam przykład z użyciem nowej składni wprowadzonej w ES6;
+```aidl
+class Widget {
+  constructor(width, height) {
+    this.width = width || 50;
+    this.height = height || 50;
+    this.$elem = null;
+  }
+  render($where) {
+    if (this.$elem) {
+      this.$elem.css({
+        width: this.width + 'px',
+        height: this.height + 'px',
+      }).appendTo($where);
+    }
+  }
+}
+
+class Button extends Widget {
+  constructor(width, height, label) {
+    super(width, height);
+    this.label = label || "Default";
+    this.$elem = $('<button>').text(this.label);
+  }
+  render($where) {
+    super.render($where);
+    this.$elem.click(this.onClick.bind(this));
+  }
+  onClick(evt) {
+    console.log(`Button ${this.label} clicked!`);
+  }
+}
+
+$(document).ready(() => {
+  var $body = $(document.body);
+  var btn1 = new Button(125, 30, 'Hello');
+  var btn2 = new Button(150, 40, 'World');
+  
+  btn1.render($body);
+  btn2.render($body);
+});
+```
+Niewątpliwie czytelność uległa znacznej poprawie. Wprowadzenie `super(..)` jest miłą odmianą. Jednak mimo składni to nadal
+nie są klasy tylko mechanizmy działające w oparciu o `[[Prototype]]`.
+
+##### Delegując widzetowe obiekty
+
+Przejdźmy do prostszego przykładu `Widget` / `Button` z użyciem delegacji OLOO:
+```
+var Widget = {
+  init: function(width, height) {
+    this.width = width || 50;
+    this.height = height || 50;
+    this.$elem = null;
+  },
+  insert: function($where) {
+    if (this.$elem) {
+      this.$elem.css({
+        width: this.width + 'px',
+        height: this.height + 'px',
+      }).appendTo($where);
+    }
+  }
+};
+
+var Button = Object.create(Widget);
+
+Button.setup = function(width, height, label) {
+  // wydelegowane wywołanie
+  this.init(width, height);
+  this.label = label || "Default"
+  this.$elem = $("<button>").text(this.label);
+};
+Button.build = function($where) {
+  // wydelegowane wywołanie
+  this.insert($where);
+  this.$elem.click(this.onClick.bind(this));
+};
+Button.onClick = function(evt) {
+  console.log(`Button ${this.label} clicked!`);
+};
+
+$(document).ready(function() {
+  var $body = $(document.body);
+  
+  var btn1 = Object.create(Button);
+  btn1.setup(125, 30, "Hello");
+  
+  var btn2 = Object.create(Button);
+  btn2.setup(150, 40, "World");
+  
+  btn1.build($body);
+  btn2.build($body);
+});
+```
+W podejściu OLOO nie myślimy o `Widget` jako rodzicu, a `Button` jako dziecku. `Widget` jest po prostu obiektem będącym
+zbiorem użytecznych zachowań, które może wykorzystać wyspecjalizowany widżet taki jak `Button`, który również jest
+samodzielnym obiektem. 
+
+Z punktu widzenia projektowania nie udostępniliśmy tej samej nazwy metody `render(..)` dla obydwóch obiektów, zamiast
+tego zastosowaliśmy nazwy, które dokładniej opisują wykonywane zadania (`insert(..)` oraz `build(..)`). Tak samo postąpiliśmy
+w przypadku metod inicjalizacyjnych.
+
+Unikneliśmy brzydoty pseudo-polimorfizmu (`Widget.call` oraz `Widget.prototype.render.call`) zastępując go czytelnymi
+delegacjami w postaci `this.init(..)` oraz `this.insert(..)`.
+
+Można zauważyć, że jedno wywołanie `var btn1 = new Button(..)` zostało zastąpione przez dwa: `var btn1 = Object.create(Button)`
+oraz `btn1.setup(..)`. Na pierwszy rzut oka może to być minus, więcej kodu.
+
+Jednakże, jest to plus kodu OLOO w porównaniu do stylu prototypowego. Dlaczego?
+
+W przypadku konstruktorów jesteśmy zmuszeni do konstruowania i inicjalizacji w jednym kroku. W przypadku OLOO mamy
+możliwość rozłożenia tych czynności w czasie dzieki czemu jesteśmy bardziej elastyczni.
+
+OLOO zapewnia większy podział odpowiedzialności.
