@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="10150277-8805-408a-8777-95bd608c4b32" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/YDKJS/this&amp;objectPrototypes/notes/ch6-behaviorDelegation.md" afterPath="$PROJECT_DIR$/YDKJS/this&amp;objectPrototypes/notes/ch6-behaviorDelegation.md" />
-    </list>
+    <list default="true" id="10150277-8805-408a-8777-95bd608c4b32" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.idea/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -42,8 +39,8 @@
         <entry file="file://$PROJECT_DIR$/YDKJS/this&amp;objectPrototypes/notes/ch6-behaviorDelegation.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="FIRST">
-              <first_editor relative-caret-position="192">
-                <caret line="416" column="42" lean-forward="true" selection-start-line="416" selection-start-column="42" selection-end-line="416" selection-end-column="42" />
+              <first_editor relative-caret-position="430">
+                <caret line="430" column="0" lean-forward="true" selection-start-line="430" selection-start-column="0" selection-end-line="430" selection-end-column="0" />
                 <folding />
               </first_editor>
               <second_editor />
@@ -334,7 +331,7 @@
     <property name="nodejs_interpreter_path" value="C:/Program Files/nodejs/node" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../ZeusEco" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../official-vue-tutorial" />
     <property name="js.eslint.eslintPackage" value="" />
     <property name="js-jscs-nodeInterpreter" value="C:\Program Files\nodejs\node.exe" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
@@ -830,12 +827,12 @@
       <workItem from="1490349101395" duration="7975000" />
       <workItem from="1490370482722" duration="47000" />
       <workItem from="1490596384365" duration="2438000" />
-      <workItem from="1490682586009" duration="5223000" />
+      <workItem from="1490682586009" duration="5397000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="127168000" />
+    <option name="totallyTimeSpent" value="127342000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1367,8 +1364,8 @@
     <entry file="file://$PROJECT_DIR$/YDKJS/this&amp;objectPrototypes/notes/ch6-behaviorDelegation.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="FIRST">
-          <first_editor relative-caret-position="192">
-            <caret line="416" column="42" lean-forward="true" selection-start-line="416" selection-start-column="42" selection-end-line="416" selection-end-column="42" />
+          <first_editor relative-caret-position="430">
+            <caret line="430" column="0" lean-forward="true" selection-start-line="430" selection-start-column="0" selection-end-line="430" selection-end-column="0" />
             <folding />
           </first_editor>
           <second_editor />
