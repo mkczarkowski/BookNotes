@@ -430,3 +430,190 @@ W przypadku konstruktorów jesteśmy zmuszeni do konstruowania i inicjalizacji w
 możliwość rozłożenia tych czynności w czasie dzieki czemu jesteśmy bardziej elastyczni.
 
 OLOO zapewnia większy podział odpowiedzialności.
+
+#### Prostszy design
+
+OLOO zapewnia nie tylko czystszy kod, delegacja odpowiedzialności często doprowadza do prostszej architektury programu.
+
+Nasz scenariusz przeanalizuje dwa kontrolery, jeden obsługujący formularz logowania ze strony oraz drugi, który będzie
+obsługiwał autoryzację logowania z serwerem. Obsługa zapytań AJAX zostanie zrealizowana za pomocą jQuery.
+
+Idąc za klasycznym wzorcem klasowym, rozbijemy zadanie na jego podstawową funkcjonalność w klasie `Controller` i
+stworzymy dwie klasy potomne: `LoginController` oraz `AuthController`.
+```aidl
+// rodzic
+function Controller() {
+  this.errors = [];
+}
+Controller.prototype.showDialog = function(title, msg) {
+  // wyświetl tytuł i wiadomość do użytkownika w oknie dialogowym
+};
+Controller.prototype.success = function(msg) {
+  this.showDialog("Success", msg);
+};
+Controller.prototype.failure = function(err) {
+  this.errors.push(err);
+  this.showDialog("Error", err);
+};
+```
+```aidl
+// dziecko
+function LoginController() {
+  Controller.call(this);
+}
+// połącz dziecko z rodzicem
+LoginController.prototype = Object.create(Controller.prototype);
+LoginController.prototype.getUser = function() {
+  return document.getElementById("login_username").value;
+};
+LoginController.prototype.getPassword = function() {
+  return document.getElementById("login_password").value;
+};
+LoginController.prototype.validateEntry = function(user, pw) {
+  user = user || this.getUser();
+  pw = pw || this.getPassword();
+  
+  if (!(user && pw)) {
+    return this.failure("Please enter a username & password!");
+  } else if (pw.length < 5) {
+    return this.failure("Password must be 5+ characters!");
+  }
+  // dotarłeś tutaj? zatwierdzone!
+  return true;
+};
+// Nadpisz 'failure()'
+LoginController.prototype.failure = function(err) {
+  // wywołanie "super"
+  Controller.prototype.failure.call(this, "Login invalid: " + err);
+};
+```
+```aidl
+function AuthController(login) {
+  Controller.call(this);
+  // poza dziedziczeniem potrzebujemy kompozycji
+  this.login = login;
+}
+// połącz dziecko z rodzicem
+AuthController.prototype = Object.create(Controller.prototype);
+AuthController.prototype.server = function(url, data) {
+  return $.ajax({
+    url: url,
+    data: data
+  });
+};
+AuthController.prototype.chechAuth = function() {
+  var user = this.length.getUser();
+  var pw = this.login.getPassword();
+  
+  if (this.login.validateEntry(user, pw)) {
+    this.server("/check-auth", {
+      user: user,
+      pw: pw
+    })
+    .then(this.success.bind(this))
+    .fail(this.failure.bind(this));
+  }
+};
+// nadpisujemy 'success()'
+AuthController.prototype.success = function() {
+  // wywołanie "super"
+  Controller.prototype.success.call(this, "Authenticated!");
+};
+AuthController.prototype.failure = function(err) {
+  // wywołanie "super"
+  Controller.prototype.failure.call(this, "Auth Failed: " + err);
+};
+```
+```aidl
+var auth = new AuthController(
+  // kompozycja
+  new LoginController()
+);
+auth.checkAuth();
+```
+Mamy podstawowe funkcjonalności dzielone przez wszystkie kontrolery, to jest `succes(..)`, `failure(..)` oraz `showDialog(..)`.
+Nasze klasy potomne nadpisują `failure(..)` oraz `success(..)` w celu uzyskania wyspecjalizowanego zachowania. Istotne
+jest to, że `AuthController` potrzebuje instancji `LoginController`, aby dokonywać interakcji z formularzem.
+Poza dziedziczeniem wykorzystaliśmy kompozycję, `AuthController` musi wiedzieć o `LoginController`, więc tworzymy
+jego instancję i zapisujemy ją w właściwości `login`, aby `AuthController` mógł wykonywać działania na `LoginController`.
+
+##### De-klasy-fikacja
+
+Teraz przeanalizujemy ten sam problem wykorzystując delegację zachowań.
+```aidl
+var LoginController = {
+  errors: [],
+  getUser: function() {
+    return document.getElementById("login_username").value;
+  },
+  getPassword: function() {
+    return document.getElementById("login_password").value;
+  },
+  validateEntry: function(user, pw) {
+    user = user || this.getUser();
+    pw = pw || this.getPassword();
+    
+  if (!(user && pw)) {
+    return this.failure("Please enter a username & password!");
+  } else if (pw.length < 5) {
+    return this.failure("Password must be 5+ characters!");
+  }
+  
+  // zatwierdzono!
+  return true;
+  },
+  showDialog: funcion(title, msg) {
+    // wyświetl wiadomość w oknie dialogowym
+  }
+  failure: function(err) {
+    this.errors.push(err);
+    this.showDialog("Error", "Login invalid: " + err);
+  }
+};
+```
+```aidl
+// Deleguj z 'AuthController' do 'LoginController'
+var AuthController =   Object.create(LoginController);
+
+AuthController.errors = [];
+AuthController.checkAuth = function() {
+  var user = this.getUser();
+  var pw = this.getPassword();
+  
+  if (this.validateEntry(user, pw)) {
+    this.server('/check-auth'), {
+      user: user,
+      pw: pw,
+    })
+    .then(this.accepted.bind(this))
+    .fail(this.rejected.bind(this));
+  }
+};
+AuthController.server = function(url, data) {
+  return $.ajax({
+    url: url,
+    data: data
+  });
+};
+AuthController.accepted = function() {
+  this.showDialog("Success", "Authenticated!")
+};
+AuthController.rejected = function(err) {
+  this.failure("Auth failed: " + err);
+};
+```
+Jako, że `AuthController` jest tylko obiektem (podobnie jak `LoginController`), nie musimy tworzyć instancji, aby wykonać
+nasze zadanie. Wszystko czego trzeba to:
+`AuthController.checkAuth();`.
+Z delegacją zachowań, `AuthController` i `LoginController` to po prostu obiekty, równolegli rówieśnicy, bez relacji
+rodzic-dziecko. Wybraliśmy kierunek delegacji z `AuthController` do `LoginController` - moglibyśmy ją bez problemowo
+odwrócić.
+
+Taka organizacja kodu wymaga od nas stworzenia zaledwie dwóch (`LoginController` i `AuthController`), a nie trzech bytów
+(brak `Controller`). Dzięki delegacji nie musieliśmy korzystać z kompozycji ani tworzyć instancji. Uniknęliśmy minusów
+pseudopolimorfizmu rezygnując z tych samych nazw metod dla `success(..)` i `failure(..)`. Zamiast tego nazwaliśmy je
+`accepted()` i `rejected()` w `AuthController` - co daje nam lepszy opis wykonywanych czynności.
+
+Wnioski: mamy te same możliwości z zastosowaniem prostszego wzorca.
+
+#### Ładniejsza składnia
