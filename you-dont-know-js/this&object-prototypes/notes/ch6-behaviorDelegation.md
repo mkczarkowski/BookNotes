@@ -617,3 +617,205 @@ pseudopolimorfizmu rezygnując z tych samych nazw metod dla `success(..)` i `fai
 Wnioski: mamy te same możliwości z zastosowaniem prostszego wzorca.
 
 #### Ładniejsza składnia
+
+W ES6 wprowadzono skróconą składnię dla deklaracji klas.
+```
+class Foo {
+  methodName() { ... }
+}
+```
+Nie musimy używać słowa kluczowego `function` do deklarowania metod!
+
+Na szczęście, to rozwiązanie nie jest ograniczone do `class` i można z niego korzystać podczas deklaracji jakiegokolwiek
+obiektu.
+```
+var LoginController = {
+  errors: [],
+  getUser() {
+   // ...
+  },
+  getPassword() {
+   // ...
+  },
+};
+```
+Jedyna różnica pomiędzy `class`, a obiektami to wymóg stawiania `,` pomiędzy kolejnymi deklaracjami.
+
+Aby uniknąć pojedynczego deklarowania metod z użyciem `function`, pierw możemy stworzyć obiekt korzystając z zwięzłych
+deklaracji, po czym utworzyć połączenie prototypowe za pomocą `Object.setPrototypeOf(..)`.
+```aid1
+// wykorzystajmy nową składnię do wygodniejszej deklaracji obiektu
+var AuthController = {
+  errors: [],
+  checkAuth() {
+    // ...
+  },
+  server(url, data) {
+    // ...
+  },
+  // ...
+};
+
+//teraz pozwolimy na delegację z 'Auth Controller' do 'Login Controller'
+Object.setPrototypeOf(AuthController, LoginController);
+```
+
+##### Alekykalność
+
+Jest jeden minus związany ze zwięzłymi deklaracjami.
+```aidl
+var Foo = {
+  bar() { ... }
+  baz: function baz() { ... }
+};
+```
+Po przetworzeniu na klasyczną składnię:
+```aidl
+var Foo = {
+  bar: function() { ... }
+  baz: function baz() { ... }
+```
+Skrócone `bar()` staje się anonimowym wyrażeniem funkcyjnym przypisanym do właściwości `bar`, ponieważ obiekt funkcyjny
+nie posiada nazwy. Porównując do manualnie określonej nazwy wyrażenia funkcyjnego `function baz()`, które posiada leksykalny
+identyfikator `baz`, który jest dodatkowo przypisany do właściwości `.baz`.
+
+Przypomnimy wady anonimowych wyrażeń funkcyjnych:
+
+1. trudniejsze debugowanie
+2. odwoływanie się do funkcji z jej wnętrza jest trudniejsze
+3. kod staje się (troszkę) trudniejszy do zrozumienia
+
+Punkt 1 i 3 nie dotyczy zwięzłych deklaracji.
+
+Mimo tego co zauważamy w przetworzeniu na klasyczną składnię, zwięzłe deklaracje ustawiają wewnętrzną właściwość `name`,
+która pozwala na śledzenie nazwy w stacku.
+
+Punkt 2 niestety nadal dotyczy zwięzłych deklaracji.
+```aidl
+var Foo = {
+  bar: function(x) {
+    if (x < 10) {
+      return Foo.bar(x * 2);
+    }
+    return x;
+  },
+  baz: function baz(x) {
+    if (x < 10) {
+      return baz(x * 2);
+    }
+    return x;
+  }
+};
+```
+W tym przypadku referencja `Foo.bar(x * 2)` załatwia sprawę, lecz w bardziej złożonych przypadkach byłoby to niemożliwe.
+Przykładowo gdy funkcja jest współdzielona w ramach delegacji zza pomocą wiązania `this`.
+
+Kiedy natrafimy na tego typu problemy musimy zrezygnować z zwięzłej deklaracji na rzecz jawnie nazwanego wyrażenia funkcyjnego.
+
+#### Introspekcja
+
+Introspekcja to koncepcja popularna w programowaniu zorientowanym na klasy, dzięki niej możemy analizować instancję, aby
+dowiedzieć się z czym mamy do czynienia.
+
+```aidl
+function Foo() {
+  // ...
+}
+Foo.prototype.something = function() {
+  // ...
+}
+
+var a1 = new Foo();
+
+// później
+
+if (a1 instanceof Foo) {
+  a1.something();
+}
+```
+Ponieważ `Foo.prototype` (nie mylić z `Foo`) jest w łańcuchu `[[Prototype]]` a1, operator `instanceof` (myląco) twierdzi,
+że `a1` jest instancją "klasy" `Foo`. Z tego tytułu możemy błędnie wywnioskować, że `a1` posiada możliwości opisane
+przez klasę `Foo`.
+
+Oczywiście, klasa `Foo` nie istnieje, a mamy do czynienia z najzwyklejszą funkcją `Foo`, która posiada referencję do
+obiektu `Foo.prototype`, do którego `a1` posiada połączenie delegacyjne. Ze względu na składnię operator `instanceof` 
+udaje, że sprawdza relację pomiędzy `a1`, a `Foo`, gdy tak naprawę sprawdza relację pomiędzy `a1` i `Foo.prototype`.
+
+W związku z zawiłością `instanceof`, aby dokonać właściwej introspekcji i sprawdzić czy `a1` posiada relację z wybranym obiektem
+musimy posiadać funkcję, która posiada referencję do tego obiektu - nie mamy możliwości na bezpośrednie sprawdzenie
+relacji.
+
+Wróćmy do przykładu z początku rozdziału.
+```aidl
+function Foo() { ... }
+Foo.prototype...
+
+function Bar() { ... }
+Bar.prototype = Object.create(Foo.prototype);
+
+var b1 = new Bar("b1");
+```
+Aby dokonać introspekcji z użyciem `instanceof` i `.prototype` moglibyśmy skorzystać z następujących rozwiazań:
+```aidl
+// relacja pomiędzy 'Foo' oraz 'Bar'
+Bar.prototype instanceof Foo; // true
+Object.getPrototypeOf(Bar.prototype) === Foo.prototype; // true
+Foo.prototype.isPrototypeOf(Bar.prototype); // true
+
+// odnosząc 'b1' zarówno do 'Foo' jak i 'Bar'
+b1 instanceof Foo; // true
+b1 instanceof Bar; // true
+Object.getPrototypeOf(b1) === Bar.prototype; // true
+Foo.prototype.isPrototypeOf(b1); // true
+Bar.protoype.isPrototypeOf(b1); // true
+```
+
+Kolejnym powszechnym sposobem dokonywania introspekcji jest tzw. "duck typing". Takie określenie pochodzi od porzekadła
+"jeżeli wygląda jak kaczka i kwaka jak kaczka, to musimy mieć do czynienia z kaczką".
+```aidl
+if (a1.something) {
+  a1.something();
+}
+```
+Zamiast badać relację pomiędzy `a1`, a obiektem, który trzyma delegowalną funkcję `something()` wychodzimy z założenia,
+że zdawalność testu `a1.something`, oznacza zdolność `a1` do wywołania `something()` (nie zważając na to czy funkcja znajduje
+się wewnątrz `a1` czy w delegowanym obiekcie). Musimy uważać z zastosowaniem "duck typingu" w przypadku metody `then()`,
+ponieważ silnik zakłada wtedy, że musimy mieć do czynienia z ES6 Promise.
+
+W przypadku kodu OLOO, introspekcja typów jest znacznie czystsza.
+```aidl
+var Foo = { ... }
+
+var Bar = Object.create(Foo);
+Bar...
+
+var b1 = Object.create(Bar);
+```
+Korzystając z tego podejścia, które opiera się na zwykłych obiektach związanych relacją łańcucha `[[Prototype]]` możemy
+użyć uproszczonej introspekcji:
+```aidl
+// relacja pomiędzy 'Foo' i 'Bar'
+Foo.isPrototypeOf(Bar); // true
+Object.getPrototypeOf(Bar) === Foo; // true
+
+// relacja 'b1' z 'Foo' oraz 'Bar'
+Foo.isPrototypeOf(b1); // true
+Bar.isPrototypeOf(b1); // true
+Object.getPrototypeOf(b1) === Bar; // true
+```
+Nie korzystamy z mylącego operatora `instanceof`, który sugeruje nam związek z klasami. Teraz jawnie pytamy: "Czy jesteś
+moim prototypem?".
+
+W ten sposób unikamy komplikacji i cała introspekcja staje się dużo bardziej zrozumiała. Po raz kolejny OLOO okazało się
+prostsze, niż imitacja klas.
+
+#### Podsumowanie
+
+Klasy i dziedziczenie to tylko jeden z wzorców programowania. Innym, dużo rzadziej wykorzystywanym, a dużo lepiej przystosowanym
+do mechaniki JS jest **delegacja zachowań**.
+
+Delegacja zachowań sugeruje, że obiekty są rówieśnikami, które dokonują delegacji pomiędzy sobą, zamiast tworzenia relacji
+rodzic/dziecko. Mechanizm `[[Prototype]]` JavaScriptu jest w samej swojej naturze mechanizmem delegowania zachowań.
+
+OLOO (objects-linked-to-other-objects) jest stylem pisania kodu, który obiera się na tworzeniu obiektów i ich relacji
+z odejściem od klasowej abstrakcji. W ten sposób bez przeszkód wykorzystujemy zalety mechanizmu `[[Prototype]]`.
