@@ -432,7 +432,7 @@ W `non-strict mode` próba utworzenia `b` stanowi ciche niepowodzenie, w `strict
 
 **Pieczęć**
 
-`Object.seal(..)` tworzy "zapieczentowany" obiekt, czyli najzwyczajniej wywołuje na nim `Object.preventExtensions(..)` i
+`Object.seal(..)` tworzy "zapieczętowany" obiekt, czyli najzwyczajniej wywołuje na nim `Object.preventExtensions(..)` i
 ustawia deskryptor `configurable` wszystkich jego właściwości na `false`.
 
 **Freeze**
