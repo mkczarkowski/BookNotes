@@ -9,7 +9,7 @@ w tym rozdziale.
 Po raz kolejny skupimy się na fundamentalnych różnicach pomiędzy projektowaniem zorientowanym na delegację, a tym zorientowanym
 na klasy.
 
-**Warto wiedzieć**: Niektóre zasady projektowania zorientowanego są jak najbardziej poprawne i godne respektowania.
+**Warto wiedzieć**: Niektóre zasady projektowania zorientowanego klasowego są jak najbardziej poprawne i godne respektowania.
 Najlepszym przykładem jest enkapsulacja, która świetnie współgra z delegowaniem.
 
 ##### Teoria klas
